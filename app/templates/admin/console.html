@@ -1,0 +1,196 @@
+{% extends "admin/base.html" %}
+{% block title %}Console{% endblock %}
+{% block ready_script %}
+    {{ super() }}
+    // Event handler for server sent data.
+    // The callback function is invoked whenever the server emits data
+    // to the client. The data is then displayed in the "Received"
+    // section of the page.
+    socket.on('my_response', function(msg) {
+        $('#log').prepend('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
+    });
+
+    socket.on('a911_alarm', function(msg) {
+        // $('#log').prepend('<br>' + $('<div/>').html(msg.data + ': ' + $('<a/>').text(msg.id).attr("href",location.protocol + '//' + document.domain + ':' + location.port + "/alert/" + msg.id)));
+
+        if (msg.type === 'alarm'){
+            $('#log').prepend('<br><a href="' 
+            + location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + msg.id 
+            + '" target="_blank">' + msg.id + '</a>');
+            $('#alert_data').prepend('<option value="' + msg.id + '">' + msg.id + '__</option>');
+        } else {
+            $('#log').prepend('<br> Alarms received: [' + msg.ids.join(',') + ']');
+        }
+        
+    });
+
+    socket.on('a911_alarms', function(msg) {
+        $('#log').prepend('<br>' + msg.id + '');
+    });
+
+    socket.on('init_a911_alarm', function(msg) {
+        $('#log').prepend('<br><strong>INIT: <a href="' 
+            + location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + msg.id 
+            + '" target="_blank">' + msg.id  + '</a></strong>');
+    });
+
+    socket.on('unit_update', function(msg){
+        $('#log').prepend('<br><a href="' 
+            + location.protocol + '//' + document.domain + ':' + location.port + '/admin/_station/"'
+            + ' target="_blank"> Unit updates </a>');
+    });
+
+    // Interval function that tests message latency by sending a "ping"
+    // message. The server then responds with a "pong" message and the
+    // round trip time is measured.
+    var ping_pong_times = [];
+    var start_time;
+    window.setInterval(function() {
+        start_time = (new Date).getTime();
+        socket.emit('my_ping');
+    }, 1000);
+
+    // Handler for the "pong" message. When the pong is received, the
+    // time from the ping is stored, and the average of the last 30
+    // samples is average and displayed.
+    socket.on('my_pong', function() {
+        var latency = (new Date).getTime() - start_time;
+        ping_pong_times.push(latency);
+        ping_pong_times = ping_pong_times.slice(-30); // keep last 30 samples
+        var sum = 0;
+        for (var i = 0; i < ping_pong_times.length; i++)
+            sum += ping_pong_times[i];
+        $('#ping-pong').text(Math.round(10 * sum / ping_pong_times.length) / 10);
+    });
+
+    // Handlers for the different forms in the page.
+    // These accept data from the user and send it to the server in a
+    // variety of ways
+    $('form#emit').submit(function(event) {
+        socket.emit('my_event', {data: $('#emit_data').val()});
+        return false;
+    });
+    $('form#alert').submit(function(event) {
+        socket.emit('a911_alarm', {'type': 'alarm', 'id': $('#alert_data').val()});
+        return false;
+    });
+    $('form#broadcast').submit(function(event) {
+        socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});
+        return false;
+    });
+    $('form#join').submit(function(event) {
+        socket.emit('join', {room: $('#join_room').val()});
+        return false;
+    });
+    $('form#leave').submit(function(event) {
+        socket.emit('leave', {room: $('#leave_room').val()});
+        return false;
+    });
+    $('form#send_room').submit(function(event) {
+        socket.emit('my_room_event', {room: $('#room_name').val(), data: $('#room_data').val()});
+        return false;
+    });
+    $('form#close').submit(function(event) {
+        socket.emit('close_room', {room: $('#close_room').val()});
+        return false;
+    });
+    $('#sio_disconnect').click(function(event) {
+        socket.emit('disconnect_request');
+        return false;
+    });
+    $('#sio_connect').click(function(event){
+        socket.connect();
+        return false;
+    });
+    $('#sio_reconnect').click(function(event){
+        socket.emit('get_a911_alarms', 24);
+        return false;
+    });
+
+{% endblock %}
+
+{% block nav %}
+<li class="nav-item active">
+    <a class="nav-link" href="#">Console <span class="sr-only">(current)</span></a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/admin/stationmanager/">Stations </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link" href="/admin/unitmanager/">Units </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-4">
+        <ul class="list-group">
+            <li class="list-group-item">Async mode is: <b>{{ async_mode }}</b></li>
+            <li class="list-group-item">Average ping/pong latency: <b><span id="ping-pong"></span>ms</b></li>
+        </ul>
+    </div>
+</div>
+<div class="row">
+    <div class="col">
+        <h2>Send:</h2>
+        <ul class="list-group">
+            <li class="list-group-item">
+                <form id="emit" method="POST" action='#'>
+                    <input type="text" name="emit_data" id="emit_data" placeholder="Message">
+                    <input type="submit" value="Echo">
+                </form>
+            </li>
+            <li class="list-group-item">
+                <form id="alert" method="POST" action='#'>
+                    <select name="alert_data" id="alert_data">
+                        {% for alarm in alarms %}
+                            <option value="{{ alarm[0] }}">{{ alarm[0] }}</option>
+                        {% endfor %}
+                    </select>
+                    <input type="submit" name="Alert" value="Alert"><span style="color: red;">WARNING: THIS WILL ALERT ALL DASHBOARDS</span>
+                </form>
+            </li>
+            <li class="list-group-item">
+                <form id="broadcast" method="POST" action='#'>
+                    <input type="text" name="broadcast_data" id="broadcast_data" placeholder="Message">
+                    <input type="submit" value="Broadcast">
+                </form>
+            </li>
+            <li class="list-group-item">
+                <form id="join" method="POST" action='#'>
+                    <input type="text" name="join_room" id="join_room" placeholder="Room Name">
+                    <input type="submit" value="Join Room">
+                </form>
+            </li>
+            <li class="list-group-item">
+                <form id="leave" method="POST" action='#'>
+                    <input type="text" name="leave_room" id="leave_room" placeholder="Room Name">
+                    <input type="submit" value="Leave Room">
+                </form>
+            </li>
+            <li class="list-group-item">
+                <form id="send_room" method="POST" action='#'>
+                    <input type="text" name="room_name" id="room_name" placeholder="Room Name">
+                    <input type="text" name="room_data" id="room_data" placeholder="Message">
+                    <input type="submit" value="Send to Room">
+                </form>
+            </li>
+            <li class="list-group-item">
+                <form id="close" method="POST" action="#">
+                    <input type="text" name="close_room" id="close_room" placeholder="Room Name">
+                    <input type="submit" value="Close Room">
+                </form>
+            </li>
+            <li class="list-group-item">
+                <button id="sio_connect" class="btn btn-success">Connect</button>
+                <button id="sio_disconnect" class="btn btn-danger">Disconnect</button>
+                <button id="sio_reconnect" class="btn btn-warning">Reconnect</button>
+            </li>
+           </ul>
+    </div>
+    <div class="col">
+        <h2>Receive:</h2>
+        <div id="log" class="pre-scrollable"></div>  
+    </div>
+</div>
+{% endblock %}

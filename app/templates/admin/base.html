@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="application-name" content="Pi Kitchen Dashboard"/>
+
+    <title>{% block title %}{% endblock %} | AFD Dashboard</title>
+
+    <meta name="description" content="Station Chalkboard"/>
+    <meta name="author" content="Joe Porcelli"/>
+    <meta name="designer" content="Joe Porcelli"/>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='libs/bootstrap-4.0.0-dist/css/bootstrap.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='libs/fontawesome-pro-5.0.12/css/fontawesome-all.min.css') }}" />
+
+    <script src="{{ url_for('static', filename='libs/jquery-3.2.1.min.js') }} "></script>
+    <script src="{{ url_for('static', filename='libs/tether/js/tether.min.js') }} "></script>
+    <script src="{{ url_for('static', filename='libs/bootstrap-4.0.0-dist/js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='libs/moment.js') }} "></script>
+    <script src="{{ url_for('static', filename='libs/socket.io.js') }}"></script>
+
+    <script type="text/javascript" charset="utf-8">
+
+        $(document).ready(function() {
+        	{% block ready_script %}
+            // Only commuicate within the /afd namespace
+            namespace = '/afd';
+
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+
+            // Event handler for new connections.
+            // The callback function is invoked when a connection with the
+            // server is established.
+            socket.on('connect', function() {
+                socket.emit('my_event', {data: 'I\'m connected!'});
+            });
+
+            // Handlers for the broadcast form in the navbar.
+            // These accept a user message and broadcasts
+            // it to the /afd namespace
+            $('form#send_msg').submit(function(event) {
+                console.log($('#msg_content').val());
+                socket.emit('my_broadcast_event', {data: $('#msg_content').val()});
+                return false;
+            });
+            {% endblock %}
+        });
+    </script>
+</head>
+<body>
+	    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">AFD Dashboard</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+            	{% block nav %}{% endblock %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> Dashboards </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                         {% for station in stations %}
+                        <a class="dropdown-item" href="/station/{{ station.name }}" target="_blank">{{ station.name }}</a>
+                        {% endfor %}
+                        <div class="dropdown-divider"></div>
+                    </div>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0" id="send_msg">
+                <input class="form-control mr-sm-2" type="text" id="msg_content" placeholder="Message" aria-label="Message">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Send</button>
+            </form>
+        </div>
+    </nav>
+
+
+    <div class="container-fluid">
+    	{% block content %}{% endblock %}
+    </div>
+</body>
+</html>

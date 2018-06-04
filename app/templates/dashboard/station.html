@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <meta name="application-name" content="Pi Kitchen Dashboard"/>
+
+        <title>Alexandria Fire Department | Dashboard</title>
+
+        <meta name="description" content="Station Chalkboard"/>
+        <meta name="author" content="Joe Porcelli"/>
+        <meta name="designer" content="Joe Porcelli"/>
+        
+        <link rel="stylesheet" href="{{ url_for('static', filename='libs/bootstrap-4.0.0-dist/css/bootstrap.min.css') }}" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='libs/leaflet/leaflet.css') }}" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='libs/fontawesome-pro-5.0.12/css/fontawesome-all.min.css') }}" />
+
+        <!-- Template-specific styles -->
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}" />
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/weather-icons.css') }}" />
+        <script src="{{ url_for('static', filename='libs/jquery-3.2.1.min.js') }} "></script>
+        <script src="{{ url_for('static', filename='libs/tether/js/tether.min.js') }} "></script>
+
+        
+
+        <script src="{{ url_for('static', filename='libs/bootstrap-4.0.0-dist/js/bootstrap.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='libs/leaflet/leaflet.js') }}"></script>
+        <script src="{{ url_for('static', filename='libs/moment.js') }} "></script>
+
+        <script src="{{ url_for('static', filename='libs/socket.io.js') }}"></script>
+
+
+
+        <script src="{{ url_for('static', filename='js/wx.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/clock.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/cb-settings.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/webstaff.js') }}"></script>
+
+        <script src="{{ url_for('static', filename='js/active911/A91DataObject.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/active911/A91MappedDataObject.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/active911/Active911.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/active911/A91Alert.js') }}"></script>
+
+        <script src="{{ url_for('static', filename='js/working.js') }}"></script>
+
+
+    <script charset="utf-8">
+        var  afdDashboardConfig = {
+            'station'       : '{{ station }}' || 'None',
+            {% if alertalways == 'alertalways' %}
+                'always_alert'  : true,
+            {% else %}
+                'always_alert'  : false,
+            {% endif %}
+            'popup_time': 2,
+            'alert_units': '',
+            'home_units': ''
+        };
+
+        $(document).ready(function() {
+            var afdDashboardConfig = window.afdDashboardConfig;
+
+            // Get the initial units to alert and display roster
+            $.ajax({
+                    type: "GET",
+                    url: '/admin/_station/{{ station }}/',
+                    dataType : 'json',
+                    success: function(json, textStatus, request){
+                        var station = json.message.stations[{{ station }}]
+                        afdDashboardConfig['home_units_str'] = station.homed.toUpperCase();
+                        afdDashboardConfig['alert_units'] = station.alert.toUpperCase().split(',');
+                        afdDashboardConfig['home_units'] = station.homed.toUpperCase().split(',');
+
+                    }
+             });
+
+            if ( afdDashboardConfig['station'] === 'None'){
+                console.log("No Station");
+            } else {
+                console.log("Station: " + afdDashboardConfig['station']);
+            }
+
+            active911 = new Active911();
+            /**
+             * Draw an alarm
+             *
+             * Overridden from base
+             * @param alert the alert to draw
+             */
+            Active911.prototype.draw_alert=function(alert) {
+
+                // Has this alert already been drawn on the screen once?
+                if($(alert.get_html_selector()).length) {
+
+                    return; /* TODO - Should really modify alert */
+                }
+
+                // Get the alert HTML
+                $("#alerts").prepend(alert.to_html());
+
+                // Click for details
+                $(alert.get_html_selector()).click(function() {
+                    var alert_id = parseInt($(this).attr("alert_id"));
+                    var alert = active911.get_alert(parseInt($(this).attr("alert_id")));
+
+                    if(alert) {
+                        $("div#fullscreenAlert .A91AlertDetail").html(alert.to_detail_html());
+                        $("#alertModal").modal('show');
+                    }
+                });
+
+            };
+
+            /**
+             * Draw an alarm, if its alerted
+             *
+             * Overridden from base
+             * @param alert the alert to draw
+             */
+            Active911.prototype.draw_alerted_alert=function(alert) {
+
+                $("div#fullscreenAlert .A91AlertDetail").html(alert.to_detail_html());
+                $("#alertModal").modal('show');
+                setTimeout(function() {$("#alertModal").modal('hide');}, 60000 * afdDashboardConfig['popup_time']);
+            };
+
+            function fetchAlert(id){
+                var alert_url = location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + id;
+                console.log("Received Alarm: " + id);
+
+                $.ajax({
+                    type: 'GET',
+                    url: alert_url,
+                    dataType : 'json',
+                    success: function(json, textStatus, request){
+                        if (json.result == 'success' ){
+                            // Here we update the age since there is a possibility the alarm was stagnant on the server
+                            json.message.age = Math.round(moment().diff(moment.unix(json.message.timestamp))/1000);
+                            var a = new A91Alert(json.message);
+                            
+                            // We don't want to Alert for alarms > 2 minutes
+                            console.log("age: " + (json.message.age/60).toString());
+                            if (json.message.age/60 > 2){
+                                active911.add_alert(a, true);
+                            } else {
+                                active911.add_alert(a);
+                            }
+                            
+                        } 
+                    },
+                    error: function(xhr, ajaxOpts, thrownError){
+                        console.log("Warning: Alarm #" + id + " not found.");
+                    }
+                });
+            }   // fetchAlert()
+
+            /*=======================================================*
+                Initialize Alarms from active 911
+             *=======================================================*/
+
+            // We use the 'afd' namespace for Active911 alerts, other names spaces
+            // can be added by comma seperation in the string
+            namespace = '/afd';
+
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+
+            // Event handler for new connections.
+            // The callback function is invoked when a connection with the
+            // server is established.
+            socket.on('connect', function() {
+                console.log("Connection established to Active911 data feed.")
+                socket.emit('get_a911_alarms', 10);
+            });
+
+            // Event handler for disconnection events.
+            // We are simplying logging this to the console
+            socket.on('disconnect', function(){
+                console.log("Disconnected from Active911 data feed.")
+            });
+
+            // Event handler for server sent Active911 Alarms (a911_alarm) messages.
+            // The callback function is invoked whenever the server emits data
+            // to the client.
+            socket.on('a911_alarm', function(msg) {
+                console.log("Active 911 " + msg.type + " received.");
+                if (msg.type === 'alarm'){
+                    // If single alarm is recieved, fetch the alarm data,
+                    // parse and send to screen.
+                    fetchAlert(msg.id);
+                } else if (msg.type === 'alarms'){
+                    // If multiple alarms are received, parse them individually
+                    for (var adx = msg.ids.length; adx > 0; adx--) {
+                        fetchAlert(msg.ids[adx-1]);
+                    }
+                }
+                
+            });
+            socket.on('unit_update', function(msg){
+                $.ajax({
+                    type: "GET",
+                    url: '/admin/_station/{{ station }}/',
+                    dataType : 'json',
+                    success: function(json, textStatus, request){
+                        var station = json.message.stations[{{ station }}]
+                        if (afdDashboardConfig['home_units_str'] !== station.homed.toUpperCase()) {
+                            afdDashboardConfig['home_units_str'] = station.homed.toUpperCase();
+                            afdDashboardConfig['home_units'] = station.homed.toUpperCase().split(',');
+                            $.webstaff.reset();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id="container">
+        <div class="row">
+            <div class="col-3 cb-active911" id="alerts"></div>
+            <div class="col-7">
+                <!-- Display the clock here -->
+                <div class="cb-clock"><div id="clock-bkg"></div></div>
+                <!-- Display date here -->
+                <div class="cb-date btn"></div>
+
+                <!-- Display Roster here -->
+                <div class="container cb-webstaff"></div>
+                
+            </div>
+            <div class="col-2 wx-forecast">
+                <!-- Weather forcast goes here -->
+            </div>
+        </div>
+    </div>
+    <div id="alertModal" class="modal modal-fullscreen hide" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-body">
+            <div id="fullscreenAlert" class="container-fluid h-100">
+                <div class="row h-100">
+                    <div class="A91AlertDetail col-5 h-100">
+                    </div>
+                    <div id="alertMap" class="col-7 h-100"></div>
+                </div>
+                
+            </div>
+        </div>
+        <div class="modal-footer"></div>
+    </div>
+</body>
+</html>
