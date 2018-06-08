@@ -90,8 +90,6 @@ Copyright 2017 Joseph Porcelli
 		$.wx({woeid: 2353019});	// Alexandria City	Virginia	United States
 		$.wx.goYahoo();
 
-		// Handle settings
-		$.cb_settings();
 
 		// Load Telestaff
 		$.webstaff({});
@@ -112,14 +110,6 @@ Copyright 2017 Joseph Porcelli
 			
 		$('#alertModal').on('shown.bs.modal', function (e) {
 	  		$.alertMap.invalidateSize();
-		});
-
-
-		// Add escape key listener to enter setup menu
-		$(document).keyup(function(e) {
-		     if (e.keyCode == 27) { // escape key maps to keycode `27`
-		        $.cb_settings.displaySettings();
-		    }
 		});
 
 	});
