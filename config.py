@@ -24,7 +24,7 @@ class Config(object):
     # the best option based on installed packages.
     ASYNC_MODE = None
 
-    ACTIVE_911_DEVICE_ID = ""
+    ACTIVE_911_DEVICE_ID = ''
 
     TS_USER = ''
     TS_PASS = ''
@@ -32,3 +32,17 @@ class Config(object):
     D_PASS = ''
 
     LOGGING_PATH = 'log'
+
+    # Logging Levels:
+    #
+    # Log Level     | Use Value
+    # --------------+-----------
+    # CRITICAL      | 50
+    # ERROR         | 40
+    # WARNING       | 30
+    # INFO          | 20
+    # DEBUG         | 10
+    # VERBOSE       | 1
+    # NOTSET        | 0
+
+    LOGGING_LEVEL = 1   # VERBOSE

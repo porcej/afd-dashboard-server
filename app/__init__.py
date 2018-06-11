@@ -85,7 +85,7 @@ def create_app(config_class=Config):
         rlh = logging.handlers.TimedRotatingFileHandler(
                                 os.path.join(lp, 'dashboard.log'), 
                                 when='midnight')
-        logging.basicConfig(level=1,
+        logging.basicConfig(level=app.config['LOGGING_LEVEL'],
                 format='%(asctime)s %(levelname)-8s %(message)s',
                 datefmt='%H:%M:%S',
                 handlers=[rlh])
