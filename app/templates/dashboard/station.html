@@ -11,7 +11,7 @@
         <meta name="author" content="Joe Porcelli"/>
         <meta name="designer" content="Joe Porcelli"/>
         
-        <link rel="stylesheet" href="{{ url_for('static', filename='libs/bootstrap-4.0.0-dist/css/bootstrap.min.css') }}" />
+        <link rel="stylesheet" href="{{ url_for('static', filename='libs/bootstrap-4.1.1-dist/css/bootstrap.min.css') }}" />
         <link rel="stylesheet" href="{{ url_for('static', filename='libs/leaflet/leaflet.css') }}" />
         <link rel="stylesheet" href="{{ url_for('static', filename='libs/fontawesome-pro-5.0.12/css/fontawesome-all.min.css') }}" />
 
@@ -23,7 +23,7 @@
 
         
 
-        <script src="{{ url_for('static', filename='libs/bootstrap-4.0.0-dist/js/bootstrap.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='libs/bootstrap-4.1.1-dist/js/bootstrap.min.js') }}"></script>
         <script src="{{ url_for('static', filename='libs/leaflet/leaflet.js') }}"></script>
         <script src="{{ url_for('static', filename='libs/moment.js') }} "></script>
 
@@ -43,7 +43,7 @@
         <script src="{{ url_for('static', filename='js/working.js') }}"></script>
 
 
-    <script charset="utf-8">
+    <script>
         var  afdDashboardConfig = {
             'station'       : '{{ station }}' || 'None',
             {% if alertalways == 'alertalways' %}
@@ -216,7 +216,7 @@
     </script>
 </head>
 <body>
-    <div id="container">
+    <main class="container">
         <div class="row">
             <div class="col-3 cb-active911" id="alerts"></div>
             <div class="col-7">
@@ -233,7 +233,8 @@
                 <!-- Weather forcast goes here -->
             </div>
         </div>
-    </div>
+    </main>
+
     <div id="alertModal" class="modal modal-fullscreen hide" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-body">
             <div id="fullscreenAlert" class="container-fluid h-100">
