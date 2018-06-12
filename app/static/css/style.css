@@ -61,7 +61,7 @@ a {
 	/*background: black;*/
 }
 
-.forecast, .a911-alert {
+.a911-alert {
 	display: block;
 	width: 100%;
     border-bottom: 1px solid #434343;
@@ -82,139 +82,78 @@ a {
 	font-size: 0.75em;
 }
 
-.forecast .wx-title{
-	display: block;
-	width: 100%;
-	text-align: center;
-}
-
-.wx-icon {
-	text-align: center;
-	height: 100%;
-		font-size: 4.4rem;
-}
-
-.wx-card {
-	background-color: transparent;
-}
-
-.wx-card .container{
-	height: 100%;
-}
-
-/*.low .high{
-	display: inline-block;
-	width: 50%;
-	text-align: center;
-}
-*/
-/*.low {
-	margin-left: 7%;
-}
-
-.high {
-	margin-right: 7%;
-}*/
-
-.icon-day {
-}
-
-/*.forecast {
-width: 20%;
-}*/
-
-.wx-high, .wx-low {
-	width: 60%;
-	margin: 0 auto;
-	word-spacing: 15px;
-	border-radius: 25px;
-}
-
-.forecast0 {
-color: #FFFFFF;
-}
-.forecast1 {
-color: #CCCCCC;
-}
-.forecast2 {
-color: #999999;
-}
-.forecast3 {
-color: #777777;
-}
-.forecast4 {
-color: #777777;
-}
-
-.wi {
-/* font-size: 4.4rem; */
-/*  line-height: 1.8rem !important; */
-/* 	padding-top: 0.1rem; */
-}
-#currently {
- height: 56vh;
-}
-#currently .wi {
-font-size: 1.4rem;
-	line-height 1.6rem !important;
-}
-
-#forecastHeading {
-height: 100px;
-}
-#forecast {
- font-size: 15vmin;
- margin-bottom: 4vmin;
-}
-
-.wx-content {
-	width: 100%;
-	/*background-color: purple;*/
-	height: 100%;
-}
-
-.wx-info {
-	display: block;
-	width: 48%;
-	height: 100%;
-}
-
-.wx-day {
-font-size: 3.5vmin;
-margin-bottom: 1.5vmin;
-}
-.wx-desc {
-	margin-top: 0.5vmin;
-	margin-bottom: 0.5vmin;
-}
-
-.wx-temps, .wx-wind i{
-/* 	display: inline-block;
-	width: 40%;
-	height: 100%; */
-/*	width: 80%;
-	margin: 0 auto;*/
-	padding: 0;
-	font-size: 1rem;
-}
-]
-.currentTemp {
- font-size: 3.5vmin;
-}
-.wx-temp {
- font-size: 15vmin;
-}
-
-#currentlyHeading {
-font-size: 5vmin;
-}
-#currently .wx-desc {
-font-size: 8vmin;
-margin-bottom: 0.5vmin;
-}
-#currently .tvminp {
-font-size: 2.5vmin;
-}
+/* *** Chalk-boord WX here *** */
+    #cb-wx{
+      background-color: #000000;
+      display: flex;
+      flex-direction: row;
+      color: #eeeeee;
+    }
+    .wx-current, .wx-forecast {
+      align-items: center;
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5em 0.45em;
+      text-align: center;
+    }
+    .wx-current {
+      font-size: 1.1em;
+      flex-grow: 10;
+    }
+    .wx-forecast{
+      flex-grow: 30;
+    }
+    .wx-current .wx-icon{
+      font-size: 80px;
+    }
+    .wx-current .wx-conditions{
+      display: flex;
+      flex-grow: 1;
+      flex-direction: column;
+      height: 5rem;
+      width: 5.25rem;
+    }
+    .wx-current .wx-temp {
+      font-size: 1.6em;
+    }
+    .wx-current .wx-desc {
+      font-size: 0.7em;
+    }
+    .wx-temps {
+      display: flex;
+      flex-direction: row;
+      flex-grow: 1;
+      font-size: 0.8 em;
+      width: 100%;
+      text-align: center;
+    }
+    .wx-highTemp, .wx-lowTemp{
+      width: 50%;
+    }
+    
+    .wx-day {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      padding: 0.6em 0.3em;
+      height: 100%;
+    }
+    
+    .wx-day:nth-child(odd){
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+    .wx-forecast.for5day .wx-day {
+      width: 20%;
+    }
+    
+    .wx-day .wx-day-name {
+      text-transform: capitalize;
+    }
+    
+    .wx-day .wx-icon {
+      margin: 0.3rem 0;
+      font-size: 2.5rem;
+    }
 
 
 /* *** Chalk-boord Clock here *** */

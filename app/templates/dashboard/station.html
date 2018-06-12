@@ -216,7 +216,7 @@
     </script>
 </head>
 <body>
-    <main class="container">
+    <main class="container-fluid">
         <div class="row">
             <div class="col-3 cb-active911" id="alerts"></div>
             <div class="col-7">
@@ -229,18 +229,27 @@
                 <div class="container cb-webstaff"></div>
                 
             </div>
-            <div class="col-2 wx-forecast">
-                <!-- Weather forcast goes here -->
-            </div>
         </div>
     </main>
+    <footer class="footer fixed-bottom">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-4 ">
+                    <!-- <div id="clock-bkg"></div> -->
+                </div>
+                <div id="cb-wx" class="col-8">
+                    <!-- Weather forcast goes here -->
+                </div>
+            </div>
+        </div>
+
+    </footer>
 
     <div id="alertModal" class="modal modal-fullscreen hide" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-body">
             <div id="fullscreenAlert" class="container-fluid h-100">
                 <div class="row h-100">
-                    <div class="A91AlertDetail col-5 h-100">
-                    </div>
+                    <div class="A91AlertDetail col-5 h-100"></div>
                     <div id="alertMap" class="col-7 h-100"></div>
                 </div>
                 
