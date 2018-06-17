@@ -26,10 +26,10 @@ from app.telestaff import bp
 @bp.route('/roster/<date>')
 def roster(date=None):
     # ts_user = Config.TS_USER
-    telestaff = ts.Telestaff(host='https://telestaff.alexandriava.gov', 
+    telestaff = ts.Telestaff(host=current_app.config['TS_SERVER'],  \
                                     t_user=current_app.config['TS_USER'], \
                                     t_pass=current_app.config['TS_PASS'], \
-                                    domain='alexgov.net\\',  \
+                                    domain=current_app.config['TS_DOMAIN'],  \
                                     d_user=current_app.config['D_USER'], \
                                     d_pass=current_app.config['D_PASS'])
 

@@ -26,6 +26,10 @@ class Config(object):
 
     ACTIVE_911_DEVICE_ID = ''
 
+
+    TS_DOMAIN = ''
+    TS_SERVER = ''
+
     TS_USER = ''
     TS_PASS = ''
     D_USER = ''
