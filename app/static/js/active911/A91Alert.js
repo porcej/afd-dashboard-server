@@ -355,10 +355,14 @@ function parseRadioFromDetails(details ){
 		}
 		
 		if (radioChannel.length > 1 ){
-			return '<button type="button" class="btn btn-warning float-right">' +
-						'<i class="fa fa-fw fa-bolt" aria-hidden="true"></i>&nbsp;' +
-						radioChannel +
-					'</button>';
+			// return '<button type="button" class="btn btn-outline-warning float-right">' +
+			// 			'<i class="fa fa-fw fa-bolt" aria-hidden="true"></i>&nbsp;' +
+			// 			radioChannel +
+			// 		'</button>';
+			return '<span class="A91Alert_radio float-right">'
+						+ '<i class="fa fa-fw fa-bolt" aria-hidden="true"></i>'
+						+ radioChannel
+						+ '</span>';
 		}
 	
 	// Unknown radio channel CH 1B,
@@ -387,29 +391,27 @@ function parseRadioFromDetails(details ){
 
  	for (var udx = 0; udx < units.length; udx++){
  		units_string += '<span class="' + getUnitType( units[udx] ) + '">' + units[udx] + '</span>';
-		
- 		if (units.length - 1 > udx){
- 			units_string += ", ";
- 		}
  	}
-	 
+
 	var dispatchTime = '<span class="float-right A91Alert_dispatchTime">'
  					+ moment.unix(this.get_item_value('timestamp')).format("HH:mm")
  					+ '</span>';
 
 	return '<div class="A91Alert" alert_id="'+this.get_item_value("id")+'">'
 		+ ((!this.item_is_empty("units"))?('<span class="A91Alert_units">'+units_string+'</span>'):"")
-		+ dispatchTime
 		+ '<h2 class="A91Alert_title">'
-		+	 '<span class="A91Alert_description">'+this.get_item_value("description")+'</span>'
+		+		'<span class="A91Alert_description">'+this.get_item_value("description")+'</span>'
 		+		radioChannel
 		+ '</h2>'
 		+ ((!this.item_is_empty("place"))?('<h3 class="A91Alert_place">'+this.get_item_value("place")+'</h3>'):'')
+
 		+ '<h3 class="A91Alert_address">'
 		+	this.get_item_value("address")
 		+	((!this.item_is_empty("unit"))?('<span class="A91Alert_unit">'+this.get_item_value("unit")+'</span>'):'')
 		+	' <span class="A91Alert_city">'+this.get_item_value("city")+'</span>'
+		+	dispatchTime
 		+ '</h3>'
+		// + dispatchTime
 	    + '</div>';
  
  };
@@ -452,17 +454,17 @@ function parseRadioFromDetails(details ){
  	}
 
  	if (alerted_units !== ''){
- 		alerted_units = '<div class="alerted_units A91Alert_units">' + alerted_units + '</div>';
+ 		alerted_units = '<div class="alerted_units A91Alert_units bottom">' + alerted_units + '</div>';
  	}
- 	var mapBox =  '<div class="float-right">' +
+ 	var mapBox =  '<div class="A91Alert_mapbox">' +
  								((!this.item_is_empty('map_code'))?
-										('Box: <span class="A91Alert_mapbox">' + 
+										('Box: <span class="A91Alert_mapbox_val">' + 
 										 	this.get_item_value('map_code')):'</span>') +
  								'</div>';
 
- 	var crossStreets = '<p class="A91Alert_xstreet">' +
- 											((!this.item_is_empty('cross_street'))?('X Street: ' + this.get_item_value('cross_street')):'') +
- 											'</p>';
+ 	var crossStreets = '<div class="A91Alert_xstreet float-right">' +
+							((!this.item_is_empty('cross_street'))?('X Street: <span class="A91Alert_xstreet_val">' + this.get_item_value('cross_street')) + '</span>':'') +
+						'</div>';
 
 
  	var notes = '<p class="A91Alert_notes">' +
@@ -484,14 +486,10 @@ function parseRadioFromDetails(details ){
 		$.alertMap.panTo([lat,lon]);
 		$.alertMap.currentCallMarker.setLatLng([lat,lon]);
 	}
-//     mymap.setZoom(18);
-//     console.log(currentCallMarker);
-//     currentCallMarker.setLatLng([38.8311813,-77.0527089]);
-	 
+ 
 
 	return '<div class="A91Alert" alert_id="'+this.get_item_value("id")+'">'
-		+((!this.item_is_empty("units"))?('<span class="A91Alert_units">'+units_string+'</span>'):"")
-		+mapBox
+		+ ((!this.item_is_empty("units"))?('<span class="A91Alert_units">'+units_string+'</span>'):"")
 		+'<h2 class="A91Alert_title">'
 			+'<span class="A91Alert_description">'+this.get_item_value("description")+'</span>'
 			+ radioChannel
@@ -503,11 +501,12 @@ function parseRadioFromDetails(details ){
 			+((!this.item_is_empty("unit"))?('<span class="A91Alert_unit">'+this.get_item_value("unit")+'</span>'):'')
 			+' <span class="A91Alert_city">'+this.get_item_value("city")+'</span>'
 		+'</h3>'
-		+ crossStreets
-		+ notes
+		+ mapBox + crossStreets + '<hr>'
+		+ notes + '<hr>'
 	+'</div>'
-	+alerted_units
 	+ ' <button type="button" class="btn btn-secondary" data-dismiss="modal">X</button>'
+	+ alerted_units
+	
  };
 
  

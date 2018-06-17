@@ -26,22 +26,11 @@ from app.telestaff import bp
 @bp.route('/roster/<date>')
 def roster(date=None):
     # ts_user = Config.TS_USER
-    ts_user = current_app.config['TS_USER']
-    ts_pass = current_app.config['TS_PASS']
-    d_user = current_app.config['D_USER']
-    d_pass = current_app.config['D_PASS']
-    if date is None: # Get today's roster
-        return ts.getTelestaff(username=ts_user, \
-                               password=ts_pass, \
-                               duser=d_user, \
-                               dpass=d_pass, \
-                               kind='roster', 
-                               jsonExport=True)
-    else:
-        return ts.getTelestaff(username=ts_user, \
-                               password=ts_pass, \
-                               duser=d_user, \
-                               dpass=d_pass, \
-                               kind='roster', \
-                               date=date, \
-                               jsonExport=True)
+    telestaff = ts.Telestaff(host='https://telestaff.alexandriava.gov', 
+                                    t_user=current_app.config['TS_USER'], \
+                                    t_pass=current_app.config['TS_PASS'], \
+                                    domain='alexgov.net\\',  \
+                                    d_user=current_app.config['D_USER'], \
+                                    d_pass=current_app.config['D_PASS'])
+
+    return telestaff.getTelestaff(kind='roster', date=date, jsonExport=True)

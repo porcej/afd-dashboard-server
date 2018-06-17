@@ -14,15 +14,23 @@ Copyright 2017 Joseph Porcelli
     'use strict';
 
     var wx_settings = {
-        apikey: '',
-        woeid: 0,
-        unit: 'F',
-        wxQueryInterval: 900000,
-        forecastTarget: '.wx-forecast',
-        currentlyTarget: '.wx-currently'
+        api_key         : '',
+        woeid           : 0,
+        unit            : 'F',
+        wxQueryInterval : 60*60*1000, // In milliseconds (60 min/hour * 60 sec/min * 1000 ms/sec)
+        wxContainer     : '#cb-wx',
+        highTemp        : 90,
+        lowTemp         : 40,
+        dataUrl         : 'https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%3D'
     };
 
-    var forecastLength = 1;
+    var wx_target = {
+        currently:  "wx-current", 
+        forecast:   "wx-forecast",
+        daily:      "wx-day" 
+    };
+
+    var forecastLength = 5;
 
     // Determines what shift is working on date
     var getShift = function( date ){
@@ -138,9 +146,7 @@ Copyright 2017 Joseph Porcelli
         }
 
         scaffoldWX();
-        scaffoldCurrent();
-        // $('head').append('<link rel="stylesheet" type="text/css" href="static/css/weather-icons.css" />');
-        
+
         return this;    // we support chaining
     }   // wx()
 
@@ -162,59 +168,32 @@ Copyright 2017 Joseph Porcelli
 
     /* =========================================================================
     
-    scaffoldWXDay - Builds HTML to support a forecast for single day
-
-    ========================================================================= */
-    function scaffoldWXDay(day, target){
-        target = target || wx_settings.forecastTarget;
-        wx_settings.forecastTarget = target;
-
-        if (day >= 0){
-            if ( $( target ).length ){
-
-                $(target).append(
-                    $("<div/>").addClass("container forecast forecast"
-                                         + day.toString()).html(`
-<div class="card wx-card">
-  <div class="card-header wx-title"></div>
-  <div class="card-body">
-    <div class="container">
-      <div class="row">
-        <div class="col">
-          <div class="wx-icon"></div>
-        </div>
-        <div class="col align-middle">
-          <div class="wx-high"></div>
-          <div class="wx-low"></div>
-        </div>
-      </div>
-    </div>
-    <h5 class="card-title wx-desc text-center"></h5>
-  </div>
-</div>    
-
-
-
-
-`));
-
-            }
-        }
-        return this;    // we support chaining
-    }   // scaffoldWXDay()
-
-
-
-    /* =========================================================================
-    
     scaffoldWX - Builds out the HTML to support WX, in target
 
     ========================================================================= */
-    function scaffoldWX(target){
-        for (var ddx = 0; ddx < forecastLength ; ddx++) {
-            scaffoldWXDay(ddx, target);
-        }
+    function scaffoldWX(){
+        if ( $( wx_settings.wxContainer ).length ){
 
+            var forecastClass = wx_target.forecast 
+                                + " for" 
+                                + forecastLength.toString()
+                                + "day"; 
+            
+            // Buidl out the WX Root
+            $( wx_settings.wxContainer )
+                .append($('<div/>').addClass( wx_target.currently ))
+                .append($('<div/>').addClass( forecastClass ));
+
+            // Build Out Current Conditions
+            scaffoldCurrent();
+
+            // Build Out Forecast
+            for (var ddx = 1; ddx <= forecastLength ; ddx++) {
+                scaffoldWXDay(ddx);
+            }
+
+        }   // Else we don't have a wx container to scaffold off of
+        
         return this;    // we support chaining
     }   // scaffoldWX()
 
@@ -224,20 +203,78 @@ Copyright 2017 Joseph Porcelli
     scaffoldCurrent - Builds out the HTML to support WX, in target
 
     ========================================================================= */
-    function scaffoldCurrent(target){
-        target = target || wx_settings.currentlyTarget;
-        wx_settings.currentlyTarget = target;
+    function scaffoldCurrent(){
+        
+        // Create a var to hold current CSS selector
+        var selector = wx_settings.wxContainer  + ' .' + wx_target.currently;
 
-        if ( $( target ).length ){
+        // Make sure our div is there
+        if ( $( selector ).length ){
 
-            $(target).append($("<div/>").addClass("row currently").html(`
-                <div class="wx-icon"></div>
-                <div class="wx-desc"></div>
-                <div class="wx-temp"></div>`));
+            // Build out Current Child
+            $(selector)
+                .append($("<div/>").addClass("wx-day-name"))
+                .append($("<div/>").addClass("wx-content"))
+
+
+            selector += " .wx-content";
+            $(selector)
+                .append($("<div/>").addClass("wx-icon"))
+                .append($("<div/>").addClass("wx-conditions"));
+
+            // Build out the Current Conditions
+            selector += " .wx-conditions";
+            $(selector)
+                .append($("<div/>").addClass("wx-temp"))
+                .append($("<div/>").addClass("wx-desc"))
+                .append($("<div/>").addClass("wx-temps"));
+
+            // Build out high and low temps
+            selector += " .wx-temps";
+            $(selector)
+                .append($("<div/>").addClass("wx-highTemp"))
+                .append($("<div/>").addClass("wx-lowTemp"));
+
         }
 
         return this;    // we support chaining
     }   // scaffoldCurrent()
+
+
+
+    /* =========================================================================
+    
+    scaffoldWXDay - Builds HTML to support a forecast for single day
+
+    ========================================================================= */
+    function scaffoldWXDay(day){
+
+        // Create a var to hold current CSS selector
+                // Create a var to hold current CSS selector
+        var selector = wx_settings.wxContainer  + ' .' + wx_target.forecast;
+
+        // Make sure our div is there
+        if ( $( selector ).length ){
+
+            // Add the day div
+            $( selector )
+                .append($("<div/>").addClass("wx-day day" + day.toString()));
+
+            // Build out the day div
+            selector += ' .day' + day.toString();
+            $( selector )
+                .append($("<div/>").addClass("wx-day-name"))
+                .append($("<div/>").addClass("wx-icon"))
+                .append($("<div/>").addClass("wx-temps"));
+
+            // Build out high and low temps
+            selector += " .wx-temps";
+            $(selector)
+                .append($("<div/>").addClass("wx-highTemp"))
+                .append($("<div/>").addClass("wx-lowTemp"));
+        }
+        return this;    // we support chaining
+    }   // scaffoldWXDay()
 
 
     /* =========================================================================
@@ -276,9 +313,11 @@ Copyright 2017 Joseph Porcelli
 
     ========================================================================= */
     function fillCurrently(currently) {
-        var icon = $('#currently .wx-icon');
-        var desc = $('#currently .wx-desc');
-        var temp = $('#currently .wx-temp');
+        // Root Selector for Current
+        var wxRoot = wx_settings.wxContainer  + ' .' + wx_target.currently;
+        var icon = $(wxRoot + ' .wx-icon');
+        var desc = $(wxRoot + ' .wx-conditions .wx-desc');
+        var temp = $(wxRoot + ' .wx-conditions .wx-temp');
 
         // Insert the current details. Icons may be changed by editing the icons array.
         if (icon.length) {
@@ -288,7 +327,7 @@ Copyright 2017 Joseph Porcelli
             desc.html(currently.text);
         }
         if (temp.length) {
-            temp.html(resolveTemp(currently.temp));
+            temp.html(resolveTemp(currently.temp) + '&deg;' + wx_settings.unit.toUpperCase());
         }
     }   // fillCurrently()
 
@@ -303,58 +342,73 @@ Copyright 2017 Joseph Porcelli
 
     ========================================================================= */
     function fillForecast(wdx, forecast) {
-        var forecastCell = '.forecast' + wdx;
+        var wxRoot = wx_settings.wxContainer;
+        
+        // If the cell is zero, it today so we want to populate the temps for Current field
+        if (wdx === 0){
+            wxRoot += ' .' + wx_target.currently;
 
-        if ( $(forecastCell).length == 0){
-            scaffoldWXDay(wdx);
-        }
-        var day = $(forecastCell + ' .wx-title');
-        var icon = $(forecastCell + ' .wx-icon');
-        var desc = $(forecastCell + ' .wx-desc');
-        var high = $(forecastCell + ' .wx-high');
-        var low = $(forecastCell + ' .wx-low');
-        var wind = $(forecastCell + ' .wx-wind');
-
-
-
-        // If this is the first cell, call it "Today" instead of the day of the week
-        if (day.length) {
+            // Todays Name and Date
             var fdate = moment(forecast.date, "DD MMM YYYY");
-            if (wdx === 0) {
-                day.html('Today');
+            $( wxRoot + " .wx-day-name")
+                .html(fdate.format('dddd, MMMM Do YYYY'))
+                .addClass(getShift(fdate) + "-shift-outline");
+
+            wxRoot += ' .wx-conditions'
+                    + ' .wx-temps';
+
+            // High Temp
+            var fHighTemp = resolveTemp(forecast.high);
+            if (parseInt(fHighTemp) >= wx_settings.highTemp){
+                $( wxRoot + ' .wx-highTemp' ).addClass('wx-temp-hot');
             } else {
-                // day.html(forecast.day);
-                day.html(fdate.format('dddd, MMMM Do YYYY'))
+                $( wxRoot + ' .wx-highTemp' ).removeClass('wx-temp-hot');
             }
-            day.addClass(getShift(fdate) + "-shift-outline");
+            $( wxRoot + ' .wx-highTemp' ).html(fHighTemp + '&deg;' + wx_settings.unit.toUpperCase());
+
+            // Low Temp
+            var fLowTemp = resolveTemp(forecast.low);
+            if (parseInt(fLowTemp) <= wx_settings.lowTemp){
+                $( wxRoot + ' .wx-lowTemp' ).addClass('wx-temp-cold');
+            } else {
+                $( wxRoot + ' .wx-lowTemp' ).removeClass('wx-temp-cold');
+            }
+            $( wxRoot + ' .wx-lowTemp' ).html(fLowTemp + '&deg;' + wx_settings.unit.toUpperCase());
+
+
+
+        } else{
+            wxRoot += ' .' + wx_target.forecast
+                    + ' .day' + wdx.toString();
+
+            // Generate Day Name
+            var fdate = moment(forecast.date, "DD MMM YYYY");
+            $( wxRoot + " .wx-day-name")
+                .html(fdate.format('dddd'))
+                .addClass(getShift(fdate) + "-shift-outline");
+
+            // Generate Icon
+            $( wxRoot + " .wx-icon").html(icons[forecast.code]);
+
+                        // High Temp
+            var fHighTemp = resolveTemp(forecast.high);
+            if (parseInt(fHighTemp) >= wx_settings.highTemp){
+                $( wxRoot + ' .wx-highTemp' ).addClass('wx-temp-hot');
+            } else {
+                $( wxRoot + ' .wx-highTemp' ).removeClass('wx-temp-hot');
+            }
+            $( wxRoot + ' .wx-highTemp' ).html(fHighTemp + '&deg;' + wx_settings.unit.toUpperCase());
+
+            // Low Temp
+            var fLowTemp = resolveTemp(forecast.low);
+            if (parseInt(fLowTemp) <= wx_settings.lowTemp){
+                $( wxRoot + ' .wx-lowTemp' ).addClass('wx-temp-cold');
+            } else {
+                $( wxRoot + ' .wx-lowTemp' ).removeClass('wx-temp-cold');
+            }
+            $( wxRoot + ' .wx-lowTemp' ).html(fLowTemp + '&deg;' + wx_settings.unit.toUpperCase());
         }
 
-        if (icon.length){
-            icon.html(icons[forecast.code]);
-        }
-        if (desc.length) {
-            desc.html(forecast.text);
-        }
-        if (high.length) {
-            var fHighTemp = resolveTemp(forecast.high);
-            if (parseInt(fHighTemp) >= 90){
-                high.addClass('wx-temp-hot');
-            } else {
-                high.removeClass('wx-temp-hot');
-            }
-            high.html('<i class="fa fa-arrow-up" aria-hidden="true"></i> ' + fHighTemp + '&deg;' + wx_settings.unit.toLowerCase());
-        }
-        if (low.length) {
-            var fLowTemp = resolveTemp(forecast.low);
-            if (parseInt(fLowTemp) <= 40){
-                low.addClass('wx-temp-cold');
-            } else {
-                low.removeClass('wx-temp-cold');
-            }
-            low.html(' <i class="fa fa-arrow-down" aria-hidden="true"></i> ' + fLowTemp + '&deg;' + wx_settings.unit.toLowerCase());
-        }
-      
-      wind.html('<i class="wi wi-strong-wind" aria-hidden="true"></i>')
     }   // fillForecast()
 
 
@@ -366,18 +420,21 @@ Copyright 2017 Joseph Porcelli
     function queryYahoo() {
         $.ajax({
             type: 'GET',
-            url: 'https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%3D' + wx_settings.woeid + '&format=json',
+            url: wx_settings.dataUrl + wx_settings.woeid + '&format=json',
             dataType: 'json'
         }).done(function (result) {
             // Drill down into the returned data to find the relevant weather information
             result = result.query.results.channel.item;
 
-            if ( $(wx_settings.currentlyTarget).length ){
+            var wxRoot = wx_settings.wxContainer;
+
+            if ( $(wxRoot + " ." + wx_target.currently).length ){
                 fillCurrently(result.condition);
             }
 
-            if ( $(wx_settings.forecastTarget).length ){
-                for (var idx = 0; idx < result.forecast.length; idx++) {
+            if ( $(wxRoot + " ." + wx_target.forecast).length ){
+                var maxForecasts = Math.min(result.forecast.length, forecastLength);
+                for (var idx = 0; idx <= maxForecasts; idx++) {
                     fillForecast(idx, result.forecast[idx]);
                 }
 
