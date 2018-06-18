@@ -43,7 +43,7 @@ class Config(object):
 
     DASHBOARD_HOST = os.environ.get('DASHBOARD_HOST') or '0.0.0.0'
 
-    DASHBOARD_PORT = int(os.environ.get('DASHBOARD_PORT')) or 5000
+    DASHBOARD_PORT = int(os.environ.get('DASHBOARD_PORT')  or 5000)
 
 
     LOGGING_PATH = os.environ.get('LOGGING_PATH') or 'log'
