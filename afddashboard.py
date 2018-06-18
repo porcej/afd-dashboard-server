@@ -2,14 +2,18 @@
 # -*- coding: ascii -*-
 
 """
-A Test harness for AFD Dashboard
+A Production harness for AFD Dashboard
+
+Requires port 80 is open
 
 Changelog:
     - 2018-05-15 - Initial Commit
 """
 
+
 from app import create_app, db, socketio
 from app.models import Alert, Roster, Station, Unit
+from config import Config
 
 # If we're using eventlet middleware (WSGI) we want to monkey patch
 # all of our sockets, connections, and threads
@@ -27,8 +31,9 @@ def make_shell_context():
     return {'db': db, 'Alert': Alert, 'Roster': Roster, 'Station': Station, 'Unit': Unit}
 
 
-# __main__ is the name for the thing that runs
 if __name__ == '__main__':
-
     # Run the socketIO Stuff here
-    socketio.run(app, debug=True)
+    socketio.run(app=app, \
+                 host=Config.DASHBOARD_HOST, \
+                 port=Config.DASHBOARD_PORT, \
+                 debug=Config.DASHBOARD_DEBUG)

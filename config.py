@@ -24,7 +24,7 @@ class Config(object):
     # the best option based on installed packages.
     ASYNC_MODE = os.environ.get('ASYNC_MODE') or None
 
-    ACTIVE_911_DEVICE_ID = os.environ.get('ACTIVE_911_DEVICE_ID') or ""
+    ACTIVE_911_DEVICE_ID = os.environ.get('ACTIVE_911_DEVICE_ID') or ''
 
 
     TS_DOMAIN = os.environ.get('TS_DOMAIN') or ''
@@ -34,6 +34,17 @@ class Config(object):
     TS_PASS = os.environ.get('TS_PASS') or ''
     D_USER = os.environ.get('D_USER') or ''
     D_PASS = os.environ.get('D_PASS') or ''
+
+
+    if (os.environ.get('DASHBOARD_DEBUG') in ['True', 'TRUE', 'true', '1']):
+        DASHBOARD_DEBUG = True
+    else:
+        DASHBOARD_DEBUG = False
+
+    DASHBOARD_HOST = os.environ.get('DASHBOARD_HOST') or '0.0.0.0'
+
+    DASHBOARD_PORT = int(os.environ.get('DASHBOARD_PORT')) or 5000
+
 
     LOGGING_PATH = os.environ.get('LOGGING_PATH') or 'log'
 
@@ -49,4 +60,4 @@ class Config(object):
     # VERBOSE       | 1
     # NOTSET        | 0
 
-    LOGGING_LEVEL = = os.environ.get('LOGGING_LEVEL') or 1   # VERBOSE
+    LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL') or 1   # VERBOSE
