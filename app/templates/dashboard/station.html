@@ -56,22 +56,39 @@
             'home_units': ''
         };
 
+
+
+
+
         $(document).ready(function() {
             var afdDashboardConfig = window.afdDashboardConfig;
 
-            // Get the initial units to alert and display roster
-            $.ajax({
+             /**
+             * Updates unit assignments
+             *
+             */
+            function updateAssignments(){
+                $.ajax({
                     type: "GET",
                     url: '/admin/_station/{{ station }}/',
                     dataType : 'json',
                     success: function(json, textStatus, request){
                         var station = json.message.stations[{{ station }}]
-                        afdDashboardConfig['home_units_str'] = station.homed.toUpperCase();
-                        afdDashboardConfig['alert_units'] = station.alert.toUpperCase().split(',');
-                        afdDashboardConfig['home_units'] = station.homed.toUpperCase().split(',');
+                        if (typeof station != 'undefined'){
+                            afdDashboardConfig['home_units_str'] = station.homed.toUpperCase();
+                            afdDashboardConfig['alert_units'] = station.alert.toUpperCase().split(',');
+                            afdDashboardConfig['home_units'] = station.homed.toUpperCase().split(',');
+                        } else {
+                            console.warn("Station {{ station }} not found.");
 
+                        }
                     }
-             });
+                 });
+            }
+
+            // Get the appropriate unit assignments from the server
+            updateAssignments();
+
 
             if ( afdDashboardConfig['station'] === 'None'){
                 console.log("No Station");
@@ -198,19 +215,7 @@
                 
             });
             socket.on('unit_update', function(msg){
-                $.ajax({
-                    type: "GET",
-                    url: '/admin/_station/{{ station }}/',
-                    dataType : 'json',
-                    success: function(json, textStatus, request){
-                        var station = json.message.stations[{{ station }}]
-                        if (afdDashboardConfig['home_units_str'] !== station.homed.toUpperCase()) {
-                            afdDashboardConfig['home_units_str'] = station.homed.toUpperCase();
-                            afdDashboardConfig['home_units'] = station.homed.toUpperCase().split(',');
-                            $.webstaff.reset();
-                        }
-                    }
-                });
+                updateAssignments();
             });
         });
     </script>
