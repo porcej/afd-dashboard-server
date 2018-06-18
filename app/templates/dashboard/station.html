@@ -53,7 +53,8 @@
             {% endif %}
             'popup_time': 2,
             'alert_units': '',
-            'home_units': ''
+            'home_units': '',
+            'refresh_time': 24    // Hours
         };
 
 
@@ -97,6 +98,8 @@
             }
 
             active911 = new Active911();
+
+
             /**
              * Draw an alarm
              *
@@ -140,6 +143,11 @@
                 setTimeout(function() {$("#alertModal").modal('hide');}, 60000 * afdDashboardConfig['popup_time']);
             };
 
+            /**
+            * Fetch alarm details from server
+            *
+            * @param id alarm id whose details are being fetched
+            */
             function fetchAlert(id){
                 var alert_url = location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + id;
                 console.log("Received Alarm: " + id);
@@ -174,32 +182,40 @@
                 Initialize Alarms from active 911
              *=======================================================*/
 
-            // We use the 'afd' namespace for Active911 alerts, other names spaces
-            // can be added by comma seperation in the string
+            // We use the 'afd' namespace for Active911 alerts
             namespace = '/afd';
 
             // Connect to the Socket.IO server.
             // The connection URL has the following format:
             //     http[s]://<domain>:<port>[/<namespace>]
-            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
+            var socket = io.connect(location.protocol 
+                            + '//' + document.domain + ':' 
+                            + location.port + namespace);
 
-            // Event handler for new connections.
-            // The callback function is invoked when a connection with the
-            // server is established.
+            /**
+            * Event handler for SocketIO connection events.
+            *
+            * We fetch the priovios 10 A911 Alarms
+            */
             socket.on('connect', function() {
-                console.log("Connection established to Active911 data feed.")
+                console.log("Connection established to dashboard server.")
                 socket.emit('get_a911_alarms', 10);
             });
 
-            // Event handler for disconnection events.
-            // We are simplying logging this to the console
+
+            /**
+            * Event handler for SocketIO disconnection events.
+            *
+            */
             socket.on('disconnect', function(){
-                console.log("Disconnected from Active911 data feed.")
+                console.log("Disconnected from dashboard server.")
             });
 
-            // Event handler for server sent Active911 Alarms (a911_alarm) messages.
-            // The callback function is invoked whenever the server emits data
-            // to the client.
+
+            /**
+            * Event handler for server sent Active911 Alarms (a911_alarm) messages.
+            *
+            */
             socket.on('a911_alarm', function(msg) {
                 console.log("Active 911 " + msg.type + " received.");
                 if (msg.type === 'alarm'){
@@ -214,6 +230,12 @@
                 }
                 
             });
+
+
+            /**
+            * Event handler for server sent Unit Update (unit_update) messages.
+            *
+            */
             socket.on('unit_update', function(msg){
                 updateAssignments();
             });
