@@ -19,23 +19,23 @@ class Config(object):
         'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Set this variable to "threading", "eventlet" or "gevent" to test the
+    # Set this variable to "threading", "eventlet" or "gevent" to specify
     # different async modes, or leave it set to None for the application to choose
     # the best option based on installed packages.
-    ASYNC_MODE = None
+    ASYNC_MODE = os.environ.get('ASYNC_MODE') or None
 
-    ACTIVE_911_DEVICE_ID = ''
+    ACTIVE_911_DEVICE_ID = os.environ.get('ACTIVE_911_DEVICE_ID') or ""
 
 
-    TS_DOMAIN = ''
-    TS_SERVER = ''
+    TS_DOMAIN = os.environ.get('TS_DOMAIN') or ''
+    TS_SERVER = os.environ.get('TS_SERVER') or ''
 
-    TS_USER = ''
-    TS_PASS = ''
-    D_USER = ''
-    D_PASS = ''
+    TS_USER = os.environ.get('TS_USER') or ''
+    TS_PASS = os.environ.get('TS_PASS') or ''
+    D_USER = os.environ.get('D_USER') or ''
+    D_PASS = os.environ.get('D_PASS') or ''
 
-    LOGGING_PATH = 'log'
+    LOGGING_PATH = os.environ.get('LOGGING_PATH') or 'log'
 
     # Logging Levels:
     #
@@ -49,4 +49,4 @@ class Config(object):
     # VERBOSE       | 1
     # NOTSET        | 0
 
-    LOGGING_LEVEL = 1   # VERBOSE
+    LOGGING_LEVEL = = os.environ.get('LOGGING_LEVEL') or 1   # VERBOSE
