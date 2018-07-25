@@ -352,7 +352,11 @@ Copyright 2017 Joseph Porcelli
             var fdate = moment(forecast.date, "DD MMM YYYY");
             $( wxRoot + " .wx-day-name")
                 .html(fdate.format('dddd, MMMM Do YYYY'))
-                .addClass(getShift(fdate) + "-shift-outline");
+                // 2018-07-24
+                //  Switched from class to 'data-shift' attribute for styling
+                // .addClass(getShift(fdate) + "-shift-outline");
+                .attr('data-shift', getShift(fdate));
+
 
             wxRoot += ' .wx-conditions'
                     + ' .wx-temps';
@@ -385,7 +389,10 @@ Copyright 2017 Joseph Porcelli
             var fdate = moment(forecast.date, "DD MMM YYYY");
             $( wxRoot + " .wx-day-name")
                 .html(fdate.format('dddd'))
-                .addClass(getShift(fdate) + "-shift-outline");
+                // 2018-07-24
+                //  Switched from class to 'data-shift' attribute for styling
+                // .addClass(getShift(fdate) + "-shift-outline");
+                .attr('data-shift', getShift(fdate));
 
             // Generate Icon
             $( wxRoot + " .wx-icon").html(icons[forecast.code]);

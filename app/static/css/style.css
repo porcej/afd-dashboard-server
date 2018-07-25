@@ -234,21 +234,21 @@ font-size: 5vmin;
 
 }
 
-.a-shift-outline {
+[data-shift=a], .a-shift-outline {
     color: #d9534f;
     background-image: none;
     background-color: transparent;
     border-color: #d9534f;
 }
 
-.b-shift-outline {
+[data-shift=b], .b-shift-outline {
     color: #5cb85c;
     background-image: none;
     background-color: transparent;
     border-color: #5cb85c;
 }
 
-.c-shift-outline {
+[data-shift=c], .c-shift-outline {
     color: #ccc;
     background-image: none;
     background-color: transparent;
