@@ -15,6 +15,8 @@ Changelog:
     - 2018-02-08 - Updated parseWebstaffroster to check for roster lenght (make sure it is there before attempting to parse it)
     - 2018-03-12 - Updated getMemberInfo to handle formating workcodes from SVGs
     - 2018-06-12 - Refactored to be Object Oriented
+    - 2018-07-26 - Update parsing of Telestaff to indicate nonWorking work codes
+
 
 """
 
@@ -198,8 +200,27 @@ class Telestaff():
     #  ****************************************************************************
     #  Replaced on 2017/10/07 to accept telestaffs new pending status convention
     #  Updated on 2018/03/12 to handle workcode formating using SVG
+    #  Updated on 2018/07/26 to handle nonWorking code and unassignedPosition code
     def getMemberInfo(self, soup):
-        data = {"name": "", "specialties": "", "badge": "", "workcode": "", "exceptioncode": "", "isRequest": False, "startTime": "", "endTime": "", "duration": 24}
+        data = {"name": "", 
+                "specialties": "", 
+                "badge": "", 
+                "workcode": "", 
+                "exceptioncode": "", 
+                "isRequest": False, 
+                "startTime": "", 
+                "endTime": "", 
+                "duration": 24, 
+                "isWorking": True, 
+                "isAssigned": True}
+
+        # Look for nonWorking Code
+        if( soup.find('div', attrs={"class": 'nonWorking'})):
+            data["isWorking"] = False
+
+        # Look for 
+        if (soup.find('div', attrs={"class": "unassignedPosition"})):
+            data['isAssigned'] = False
 
         # Get Personal Info
         resourceDisplay = soup.find("div", attrs={"data-field": "resourcedisplay"})
