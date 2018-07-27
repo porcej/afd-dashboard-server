@@ -557,17 +557,9 @@ Copyright 2017 Joseph Porcelli
                                 var positions = unit.Position;
 
                                 for (var pdx = 0; pdx < positions.length; pdx++){
-                                    if ((!positions[pdx].dot) && (positions[pdx].name !== '')){
-
-
-                                        // Filter out exception codes except for white and green
-                                            // backgrounds with black text
-                                        if (positions[pdx].exceptioncode !== ''){
-                                          var workcode = positions[pdx].workcode.toUpperCase();
-                                          if ((workcode.indexOf("ANL") !== -1)||(workcode.indexOf("TTN") !== -1)||(workcode.indexOf("KELLY") !== -1)||(workcode.indexOf("CTU") !== -1)||(workcode.indexOf("SICK") !== -1)||(workcode.indexOf("FSL") !== -1)){
-                                            continue;
-                                          }
-                                        }
+                                    
+                                    // We only care about working positions with member's name
+                                    if ((positions[pdx].isWorking) && (positions[pdx].name !== '')){
 
                                         var name = parseNameCaps(positions[pdx].name)[0];
                                         
@@ -624,7 +616,8 @@ Copyright 2017 Joseph Porcelli
 
 
                                         for (var pdx = 0; pdx < positions.length; pdx++){
-                                            if ((!positions[pdx].dot) && (positions[pdx].name !== '')){
+                                            // We only care about working positions with member's name
+                                            if ((positions[pdx].isWorking) && (positions[pdx].name !== '')){
                                               
                                                 // We want to get style information first
                                                 //      for the case were a position is off is listed first
@@ -632,12 +625,12 @@ Copyright 2017 Joseph Porcelli
                                                     pstyle = getRankStyle(positions[pdx].title);
                                                 }
                                             
-                                                if (positions[pdx].exceptioncode !== ''){
-                                                  var workcode = positions[pdx].workcode.toUpperCase();
-                                                  if ((workcode.indexOf("ANL") !== -1)||(workcode.indexOf("TTN") !== -1)||(workcode.indexOf("KELLY") !== -1)||(workcode.indexOf("CTU") !== -1)||(workcode.indexOf("SICK") !== -1)||(workcode.indexOf("FSL") !== -1)){
-                                                    continue;
-                                                  }
-                                                }
+                                                // if (positions[pdx].exceptioncode !== ''){
+                                                //   var workcode = positions[pdx].workcode.toUpperCase();
+                                                //   if ((workcode.indexOf("ANL") !== -1)||(workcode.indexOf("TTN") !== -1)||(workcode.indexOf("KELLY") !== -1)||(workcode.indexOf("CTU") !== -1)||(workcode.indexOf("SICK") !== -1)||(workcode.indexOf("FSL") !== -1)){
+                                                //     continue;
+                                                //   }
+                                                // }
 
                                           
                                                 var name = parseNameCaps(positions[pdx].name)[0];
