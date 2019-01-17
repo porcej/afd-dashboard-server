@@ -206,8 +206,8 @@ Copyright 2017 Joseph Porcelli
             // case Attendant
             case 'attendant':
             case 'attendant a':
-            case 'attandant b':
-                return 'attandant';
+            case 'attendant b':
+                return 'attendant';
                 break;
 
             // Generic officer
