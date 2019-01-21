@@ -33,6 +33,7 @@ Copyright 2017 Joseph Porcelli
 
     ========================================================================= */
     function clock( settings ){
+        settings = settings || {};
         
         var clockKeys = getKeys(clock_settings);
         for (var kdx in clockKeys){
