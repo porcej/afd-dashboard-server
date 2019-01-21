@@ -47,7 +47,7 @@ Copyright 2017 Joseph Porcelli
         go();
         
         return this;    // we support chaining
-    }   // wx()
+    }   // clock()
 
 
     /* =========================================================================
@@ -83,11 +83,11 @@ Copyright 2017 Joseph Porcelli
 
             // bring the background div onscreen and place under time
             $( this ).find(".cb-time-bkg").css({ 
-                                                    top: $( this ).find(".cb-time").position().top, 
-                                                    left:  $( this ).find(".cb-time").position().left,
-                                                    height: $( this ).find(".cb-time").height(),
-                                                    width: $( this ).find(".cb-time").width()
-                                                });
+                        top: $( this ).find(".cb-time").position().top, 
+                        left:  $( this ).find(".cb-time").position().left,
+                        height: $( this ).find(".cb-time").height(),
+                        width: $( this ).find(".cb-time").width()
+                    });
         });
         return this;    // we support chaining
     }   // scaffoldClock()
@@ -123,14 +123,6 @@ Copyright 2017 Joseph Porcelli
                 var now = moment();
                 $( this ).html(now.format(clock_settings.formatDate));
                 clock_settings.updateDateClassifer(clock_settings.targetDateElement, now);
-                // var allShiftClasses = "a-shift-outline b-shift-outline c-shift-outline";
-                // var shiftClass = getShift() + "-shift-outline";
-                // var tidyShiftClasses = allShiftClasses.replace(shiftClass);
-
-
-                // $( this ).addClass(shiftClass);
-                // $( this ).removeClass(tidyShiftClasses);
-                // $( this ).attr('class', 'cleanstate');
             });
         }, clock_settings.updateResolution);
     }   // go()
