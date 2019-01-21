@@ -47,10 +47,6 @@ a {
 	text-decoration: inherit;
 }
 
-/*#container{
-	font-family: 'OSP-DIN', Arial, sans-serif;
-}*/
-
 #container {
 	/*background-color: #333;*/
     -webkit-box-shadow: inset 0 0 5rem rgba(0,0,0,.5);
@@ -153,7 +149,7 @@ footer {
 .wx-current .wx-content .wx-desc {
 	font-size: 0.7em;
 }
-.wx-temps {
+.wx-temps, .wx-wind {
 	display: flex;
 	flex-direction: row;
 	flex-grow: 1;
@@ -161,8 +157,33 @@ footer {
 	width: 100%;
 	text-align: center;
 }
-.wx-highTemp, .wx-lowTemp{
+.wx-highTemp, .wx-lowTemp {
 	width: 50%;
+}
+
+.wx-temps > .wx-highTemp:before, .wx-temps > .wx-highTemp:before {
+	display: inline-block;
+	padding-right: 3px;
+	vertical-align: top;
+	font-weight: 900;
+	font-size: 100%;
+}
+
+
+.wx-temps > .wx-highTemp:before {
+	font-family: FontAwesome;
+	content: "\f176";
+}
+
+.wx-temps > .wx-lowTemp:before {
+	font-family: FontAwesome;
+	content: "\f175";
+}
+
+.wx-wind:before{
+	font-family: WeatherIcons;
+	content: "\f050";
+	padding-right: 20px;
 }
 
 .wx-day {
@@ -394,6 +415,10 @@ font-size: 5vmin;
 	font-size: 1.25rem;
 }
 
+.ts-times {
+	text-align: right;
+}
+
 .ts-units h4 {
 	font-size: 2.5rem;
 }
@@ -622,3 +647,7 @@ font-size: 5vmin;
 	width: 10% !important;
 }
 
+.super-text {
+	vertical-align: super;
+	font-size: 80%;
+}

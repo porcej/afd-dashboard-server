@@ -26,7 +26,7 @@ Copyright 2017 Joseph Porcelli
 		// date = moment( date.getFullYear(), date.getMonth(), date.getDate() );
 
 		var shiftMap = {
-			// 2017/00/03 - 2017/00/05 - 2017/00/07
+			// 2017/00/03 - 2017/00/05 - 2017/00/07w
 			a: {
 				first: moment([2017,0,3]),
 				second: moment([2017,0,5]),
@@ -87,8 +87,8 @@ Copyright 2017 Joseph Porcelli
 		});
 
 		// Handle WX Forecast Display
-		$.wx({woeid: 2353019});	// Alexandria City	Virginia	United States
-		$.wx.goYahoo();
+		$.wx({'forecastOffice': 'LWX', 'grid': '96,66',});
+		$.wx.nws();
 
 
 		// Load Telestaff
