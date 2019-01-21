@@ -65,6 +65,28 @@ Copyright 2017 Joseph Porcelli
 
     /* =========================================================================
     
+    formateTimeText- Formats a TS time range for roster display
+
+    ========================================================================= */
+    function formateTimeText( startTime, endTime ){
+        var timeText = parseShiftTimes(startTime) 
+                        + " - " 
+                        + parseShiftTimes(endTime);
+        
+        if ( timeText == "07:00 - 07:00" ){
+            timeText = "";
+        } else if (timeText == "07:00 - 19:00") {
+            timeText = '<i class="wi wi-day-sunny"></i>';
+        } else if (timeText == "19:00 - 07:00") {
+            timeText = '<i class="wi wi-night-clear"></i>';
+        }
+
+        return timeText;
+    }   // formateTimeText()
+
+
+    /* =========================================================================
+    
     getShift = given a date (moments) determines which shift is working
 
     ========================================================================= */
@@ -562,19 +584,16 @@ Copyright 2017 Joseph Porcelli
                                     if ((positions[pdx].isWorking) && (positions[pdx].name !== '')){
 
                                         var name = parseNameCaps(positions[pdx].name)[0];
+
+                                        var timeText = formateTimeText(
+                                                            positions[pdx].startTime, 
+                                                            positions[pdx].endTime);
+
                                         
 
-                                        var timeText = parseShiftTimes(positions[pdx].startTime) 
-                                                        + " - " 
-                                                        + parseShiftTimes(positions[pdx].endTime);
-
-                                        if ( timeText == "07:00 - 07:00" ){
-                                            timeText = "";
-                                        }
-
                                         unitDiv.append('<div class="form-control">'
-                                                         + '<span class="name">' + name 
-                                                         + '</span><span class="ts-times">' 
+                                                         + '<span class="name float-left">' + name 
+                                                         + '</span><span class="ts-times float-right">' 
                                                          + timeText + '</span></div>');
                                     }
                                 }
@@ -635,13 +654,9 @@ Copyright 2017 Joseph Porcelli
                                           
                                                 var name = parseNameCaps(positions[pdx].name)[0];
                                                 
-                                                var timeText = parseShiftTimes(positions[pdx].startTime) +
-                                                                " - " + 
-                                                                parseShiftTimes(positions[pdx].endTime);
-
-                                                if ( timeText == "07:00 - 07:00" ){
-                                                    timeText = "";
-                                                }
+                                                var timeText = formateTimeText(
+                                                                    positions[pdx].startTime, 
+                                                                    positions[pdx].endTime); 
 
                                                 $('<div/>').addClass("input-group " + pstyle.class)
                                                            .append('<span class="input-group-btn">'
@@ -649,8 +664,8 @@ Copyright 2017 Joseph Porcelli
                                                                     + '<i class="fa fa-fw ' + pstyle.icon
                                                                     +  '" aria-hidden="true"></i> </button>'
                                                                     + '</span>')
-                                                           .append('<div class="form-control"><span class="name">' 
-                                                                    + name + '</span><span class="ts-times">' 
+                                                           .append('<div class="form-control"><span class="name float-left">' 
+                                                                    + name + '</span><span class="ts-times float-right">' 
                                                                     + timeText + '</span></div>')
                                                            .appendTo(positionsDiv);
                                             }
