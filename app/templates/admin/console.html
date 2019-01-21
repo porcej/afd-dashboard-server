@@ -7,37 +7,42 @@
     // to the client. The data is then displayed in the "Received"
     // section of the page.
     socket.on('my_response', function(msg) {
-        $('#log').prepend('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
+        $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': ' + msg.data).html());
     });
 
     socket.on('a911_alarm', function(msg) {
-        // $('#log').prepend('<br>' + $('<div/>').html(msg.data + ': ' + $('<a/>').text(msg.id).attr("href",location.protocol + '//' + document.domain + ':' + location.port + "/alert/" + msg.id)));
+        // $('#log').append('<br>' + $('<div/>').html(msg.data + ': ' + $('<a/>').text(msg.id).attr("href",location.protocol + '//' + document.domain + ':' + location.port + "/alert/" + msg.id)));
 
         if (msg.type === 'alarm'){
-            $('#log').prepend('<br><a href="' 
+            $('#log').append('<br><a href="' 
             + location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + msg.id 
             + '" target="_blank">' + msg.id + '</a>');
             $('#alert_data').prepend('<option value="' + msg.id + '">' + msg.id + '__</option>');
         } else {
-            $('#log').prepend('<br> Alarms received: [' + msg.ids.join(',') + ']');
+            $('#log').append('<br> Alarms received: [' + msg.ids.join(',') + ']');
         }
         
     });
 
     socket.on('a911_alarms', function(msg) {
-        $('#log').prepend('<br>' + msg.id + '');
+        $('#log').append('<br>' + msg.id + '');
     });
 
     socket.on('init_a911_alarm', function(msg) {
-        $('#log').prepend('<br><strong>INIT: <a href="' 
+        $('#log').append('<br><strong>INIT: <a href="' 
             + location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + msg.id 
             + '" target="_blank">' + msg.id  + '</a></strong>');
     });
 
     socket.on('unit_update', function(msg){
-        $('#log').prepend('<br><a href="' 
+        $('#log').append('<br><a href="' 
             + location.protocol + '//' + document.domain + ':' + location.port + '/admin/_station/"'
             + ' target="_blank"> Unit updates </a>');
+    });
+
+    // Log page refresh attempts
+    socket.on('client_refresh', function(msg){
+        $('#log').append('<br>Refreshed <strong>' + msg.station + '</strong>');
     });
 
     // Interval function that tests message latency by sending a "ping"

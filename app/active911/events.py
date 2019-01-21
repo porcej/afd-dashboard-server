@@ -141,7 +141,11 @@ class AFDNamespace(Namespace):
             broadcast=True)
 
     def on_a911_alarms(self, message):
-        emit('a911_alarms', {'type': alarm, 'id': message['ids']}, \
+        emit('a911_alarms', {'type': 'alarm', 'id': message['ids']}, \
+            broadcast=True)
+
+    def on_client_refresh(self, message):
+        emit('client_refresh', {'type': 'admin', 'station': message['station']},\
             broadcast=True)
 
     def on_connect(self):

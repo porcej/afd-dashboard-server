@@ -231,6 +231,17 @@
                 
             });
 
+            /**
+            * Event handler for server sent Client Refresh (client_refresh) messages.
+            *
+            */
+            socket.on('client_refresh', function(msg){
+                if ((msg.station == "") || (msg.station == afdDashboardConfig.station)){
+                    location.reload(true);
+                }
+            });
+
+
 
             /**
             * Event handler for server sent Unit Update (unit_update) messages.
