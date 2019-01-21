@@ -566,6 +566,8 @@ Copyright 2019 Joseph Porcelli
                     .html(parseNWSIcon(forecast.icon));
                 
                 displayTemp(wxEle + ' .wx-lowTemp', forecast.temperature, forecast.temperatureUnit );
+                $(wxEle + '.wx-highTemp').addClass('hidden-before');
+                console.log(xEle + '.wx-highTemp');
 
             } else {
                 if (forecast.isDaytime){
@@ -577,6 +579,7 @@ Copyright 2019 Joseph Porcelli
                         .html(parseNWSIcon(forecast.icon));
                                             
                     displayTemp(wxEle + ' .wx-highTemp', forecast.temperature, forecast.temperatureUnit );
+                    $(wxEle + '.wx-highTemp').removeClass('hidden-before');
                     forecast = forecasts.shift();
                     displayTemp(wxEle + ' .wx-lowTemp', forecast.temperature, forecast.temperatureUnit );
                 } // else { } we choose to ignore night time forecasts except for tonight (if its not night now)

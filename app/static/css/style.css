@@ -651,3 +651,11 @@ font-size: 5vmin;
 	vertical-align: super;
 	font-size: 80%;
 }
+
+
+/*
+	Helper selectors for hiding before/after elements
+*/
+.hidden-before:before {
+	visibility: hidden;
+}
