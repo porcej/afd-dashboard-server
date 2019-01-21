@@ -486,10 +486,15 @@ Copyright 2019 Joseph Porcelli
     function fillCurrently(forecast) {
         // Root Selector for Current
         var wxRoot = wx_settings.wxContainer  + ' .' + wx_target.currently;
+        var dayName = $( wxRoot + " .wx-day-name");
         var icon = $(wxRoot + ' .wx-icon');
         var desc = $(wxRoot + ' .wx-conditions .wx-desc');
         var temp = $(wxRoot + ' .wx-conditions .wx-temp');
         var wind = $(wxRoot + ' .wx-conditions .wx-wind');
+
+        var fdate = moment(forecast.startTime, "YYYY-MM-DD");
+        dayName .html(fdate.format('dddd, MMMM Do YYYY'))
+                .attr('data-shift', getShift(fdate));
 
         // Insert the current details. 
         //  Icons may be changed by editing the icons array.
