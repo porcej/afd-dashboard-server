@@ -29,6 +29,14 @@ wx@font-face {
 	font-style: normal;
 }
 
+@font-face {
+  font-family: 'Font Awesome 5 Pro';
+  font-style: normal;
+  font-weight: 900;
+  src: url("../libs/fontawesome-pro-5.0.12/webfonts/fa-solid-900.eot");
+  src: url("../libs/fontawesome-pro-5.0.12/webfonts/fa-solid-900.eot?#iefix") format("embedded-opentype"), url("../libs/fontawesome-pro-5.0.12/webfonts/fa-solid-900.woff2") format("woff2"), url("../libs/fontawesome-pro-5.0.12/webfonts/fa-solid-900.woff") format("woff"), url("../libs/fontawesome-pro-5.0.12/webfonts/fa-solid-900.ttf") format("truetype"), url("../libs/fontawesome-pro-5.0.12/webfonts/fa-solid-900.svg#fontawesome") format("svg"); 
+}
+
 body {
 	text-align: center;
 	background: gray;
@@ -171,12 +179,12 @@ footer {
 
 
 .wx-temps > .wx-highTemp:before {
-	font-family: FontAwesome;
+	font-family: "Font Awesome 5 Pro";
 	content: "\f176";
 }
 
 .wx-temps > .wx-lowTemp:before {
-	font-family: FontAwesome;
+	font-family: "Font Awesome 5 Pro";
 	content: "\f175";
 }
 
