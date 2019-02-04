@@ -567,8 +567,7 @@ Copyright 2019 Joseph Porcelli
                 
                 displayTemp(wxEle + ' .wx-lowTemp', forecast.temperature, forecast.temperatureUnit );
                 $(wxEle + '.wx-highTemp').addClass('hidden-before');
-                console.log(xEle + '.wx-highTemp');
-
+                
             } else {
                 if (forecast.isDaytime){
                     $( wxEle + " .wx-day-name")
