@@ -160,6 +160,13 @@ Copyright 2019 Joseph Porcelli
 			}
 		});
 
+		// Handler for server sent settings (a911_setting) messages
+		edb.on('a911_setting', function(msg){
+			console.log("Active 911 " + msg.key + " Update Received.");
+			active911.set_settings(msg.key, msg.val);
+			active911.cull_old_alerts();
+		});
+
 		// Handler for server sent client refresh (client_refresh) messages.
 		edb.on('client_refresh', function(msg){
 		    if ((msg.station == "") || (msg.station == settings.station)){
