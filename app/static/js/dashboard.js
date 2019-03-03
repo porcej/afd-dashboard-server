@@ -56,8 +56,6 @@ Copyright 2019 Joseph Porcelli
 		// Customize Active911 to work for us
 		customizeActive911();
 
-
-
         return this;    // we support chaining
     }   // afd()
 
@@ -185,7 +183,7 @@ Copyright 2019 Joseph Porcelli
 	function fetchAlert(id){
 		var alert_url = location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + id;
 		console.log("Received Alarm: " + id);
-
+		
 		$.ajax({
 			type: 'GET',
 			url: alert_url,
@@ -225,6 +223,11 @@ Copyright 2019 Joseph Porcelli
 		 * @param alert the alert to draw
 		 */
 		Active911.prototype.draw_alert=function(alert) {
+
+			// Take this time to remove old alerts
+			this.cull_old_alerts();
+
+
 			// Has this alert already been drawn on the screen once?
 			if($(alert.get_html_selector()).length) {
 			    return; /* TODO - Should really modify alert */
@@ -233,17 +236,31 @@ Copyright 2019 Joseph Porcelli
 			// Get the alert HTML
 			$("#alerts").prepend(alert.to_html());
 
+
 			// Click for details
 			$(alert.get_html_selector()).click(function() {
-			var alert_id = parseInt($(this).attr("alert_id"));
-			var alert = active911.get_alert(parseInt($(this).attr("alert_id")));
+				var alert_id = parseInt($(this).attr("alert_id"));
+				var alert = active911.get_alert(parseInt($(this).attr("alert_id")));
 
-			if(alert) {
-				$("div#fullscreenAlert .A91AlertDetail").html(alert.to_detail_html());
-				$("#alertModal").modal('show');
-			}
+				if(alert) {
+					$("div#fullscreenAlert .A91AlertDetail").html(alert.to_detail_html());
+					$("#alertModal").modal('show');
+				}
 			});
 		};
+
+		/**
+		 * Erase an alarm
+		 *
+		 * Overridden from base
+		 * @param alert the alert to undraw
+		 */
+		 Active911.prototype.undraw_alert=function(alert) {
+		 	var alert_id = alert.get_item_value('id').toString();
+		 	$('#alerts > div[alert_id="' + alert_id + '"]').remove();
+		 };
+
+
 
 		/**
 		 * Draw an alarm, if its alerted
@@ -260,13 +277,7 @@ Copyright 2019 Joseph Porcelli
 	}	// customizeActive911()
 
 
-
-
-
-
-
-
-    $.afd = afd;
+	$.afd = afd;
     $.afd.reload = reload;
     $.afd.fetchAlert = fetchAlert;
     $.afd.updateAssignments = updateAssignments;

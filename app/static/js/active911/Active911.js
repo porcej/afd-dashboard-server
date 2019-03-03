@@ -125,7 +125,7 @@ Active911.prototype.ServerDate=function() {
  */
 Active911.prototype.remove_alert=function(alert) {
 
-	console.log("Removing alarm: " +alert.description);
+	console.log("Removing alarm: " + alert.get_item_value("id") + " - " + alert.get_item_value("description"));
 
 	// Remove from screen
 	this.undraw_alert(alert);
@@ -158,7 +158,12 @@ Active911.prototype.add_alert=function(alert, initializing) {
 	var alert_id = alert.get_item_value("id");
 	
 	// Add to array
-	console.log("Adding alarm: " +alert.get_item_value("description"));
+	console.log("Adding alarm: " + alert.get_item_value("id") + " - " + alert.get_item_value("description"));
+
+	// Don't add the alert if its older than we want
+	if(alert.age() > this.settings.alarm_autoremove_age) {
+		return;
+	}
 	
 	this.alerts.push(alert);
 	
@@ -189,68 +194,6 @@ Active911.prototype.add_alert=function(alert, initializing) {
 	 		}
  		}
 	}
-
-    // console.log(afdDashboardConfig);
-
-
-		// if (alerted_units) {
-	// if (afdDashboardConfig['always_alert']) {
-	// 	$("div#fullscreenAlert .A91AlertDetail").html(alert.to_detail_html());
-	// 	$("#alertModal").modal('show');
-	// 	setTimeout(function() {$("#alertModal").modal('hide');}, 60000 * 2);
-	// }	/* At somepoint we should really make this a config settings */
-	
-	// Pop-up an alert if we are not initializing
-	// if ((!initializing) && alert.item_is_empty('units')){
-	// 	var station209Units = ['209', 'M202', '259', '231'];
- // 		var alerted_units = false;
-	// 	var units = alert.get_item_value('units').split(","); //getUnitType
-		
-	// 	// Check if we have any units to alert
-	// 	// for (var adx = 0; adx < station209Units.length; adx++){
- // 	// 		if( units[udx].indexOf(station209Units[adx]) >= 0){
- // 	// 			alerted_units = true;
- // 	// 		}
- // 	// 	}
-		
-
-
-		
-
-	// }
-	
-
-// 	//If the alert has been already added, remove it first
-// 	var old_alert = this.get_alert(alert_id);
-// 	//Before removing the alert, we need the responses
-// 	var old_responses;
-
-// 	if(old_alert !== null){
-		
-// 		// Store the old alerts response data
-// 		old_responses = jQuery(".A91Alert[alert_id='" + alert_id + "'] .A91Alert_response").children();
-// 		this.remove_alert(old_alert);
-// 	}
-
-// 	// Add to array
-// 	console.log("Adding alarm: " +alert.get_item_value("description"));
-// // 	alert.set_marker_letter(this.current_marker_letter);
-// 	this.alerts.push(alert);
-
-// 	// Draw on screen
-// 	this.draw_alert(alert);
-
-// 	// Append the old response data
-// // 	$(".A91Alert[alert_id='"+alert_id+"'] .A91Alert_response").append(old_responses);
-// 	console.log(old_responses);
-
-	// Increment marker letter (A -> B -> ... Y -> Z -> A)
-// 	this.current_marker_letter=(String.fromCharCode(this.current_marker_letter.charCodeAt(0)+1));
-// 	if(this.current_marker_letter=="[") {	// [ is next after Z
-
-// 		this.current_marker_letter="A";
-// 	}
-
 };
 
 /**
