@@ -258,6 +258,11 @@ Copyright 2017 Joseph Porcelli
                 return 'ems';
                 break;
 
+            // Battalion Aide
+            case 'battalion aide':
+                return 'ba';
+                break;
+
             // Battalion Chief
             case 'battalion chief':
                 return 'bc';
@@ -292,6 +297,7 @@ Copyright 2017 Joseph Porcelli
             case 'ems':
             case 'medic':
             case 'attendant':
+            case 'ems supervisor':
                 return {
                         class: 'cb-ems',
                         icon: 'fa-user-md'
@@ -310,6 +316,7 @@ Copyright 2017 Joseph Porcelli
             case 'officer':
             case 'captain':
             case 'lieutenant':
+            case 'ba':
             case 'bc':
                 return {
                         class: 'cb-command',
@@ -556,80 +563,27 @@ Copyright 2017 Joseph Porcelli
                         var notes = [];
 
                         // Clear out old units html
-                        $('.ts-positions').html('');
-
-                        // Prepare single units
-                        for (var udx = 0; udx < singleUnit.length; udx++){
-                            if (! singleUnit[udx].dot){
-                                var unit = singleUnit[udx];
-
-                                // Get notes if there are there
-                                if (unit.notes !== ''){
-                                    notes.push({
-                                                owner: unit.title,
-                                                type: 'unit',
-                                                note: unit.notes
-                                            });
-                                }
-                                var unitDiv = $('<div/>').addClass("input-group cb-" + getUnitType(unit.title))
-                                                         .append('<span class="input-group-btn">'
-                                                                  + '<button class="btn" type="button"> '
-                                                                    + unit.title +' </button></span>');
-
-                                var positions = unit.Position;
-
-                                for (var pdx = 0; pdx < positions.length; pdx++){
-                                    
-                                    // We only care about working positions with member's name
-                                    if ((positions[pdx].isWorking) && (positions[pdx].name !== '')){
-
-                                        var name = parseNameCaps(positions[pdx].name)[0];
-
-                                        var timeText = formateTimeText(
-                                                            positions[pdx].startTime, 
-                                                            positions[pdx].endTime);
-
-                                        
-
-                                        unitDiv.append('<div class="form-control">'
-                                                         + '<span class="name float-left">' + name 
-                                                         + '</span><span class="ts-times float-right">' 
-                                                         + timeText + '</span></div>');
-                                    }
-                                }
-                                unitDiv.appendTo('.ts-positions');
-                            }
-                        }   // END SINGLE UNIT PROCESSING
-
-
-                        // Clear out old unites data
                         $(".ts-units").html('');
 
-                        // Prepare multiple units
+                         // Prepare multiple units
                         for (var sdx=0; sdx < multipleUnits.length; sdx++ ){
                             if (! multipleUnits[sdx].dot){
-                                if (multipleUnits[sdx].notes !== ''){
-                                    notes.push({
-                                                owner: multipleUnits[sdx].title,
-                                                type: 'station',
-                                                note: multipleUnits[sdx].notes
-                                            });
-                                }
+                                
                                 var units = multipleUnits[sdx].Unit;
                                 for (var udx=0; udx < units.length; udx++ ){
                                     if (!units[udx].dot){
+                                        var unitHeader = '<div class="card-header clearfix">' + units[udx].title;
+                                 
                                         if (units[udx].notes !== ''){
-                                            notes.push({
-                                                        owner: units[udx].title,
-                                                        type: 'unit',
-                                                        note: units[udx].notes
-                                                    });
+                                            unitHeader += '<hr><p class="ts-notes">' + units[udx].notes + '</p>';
                                         }
-                                        var unitDiv = $('<div/>').addClass("card cb-unit-roster cb-" + getUnitType(units[udx].title));
-                                        unitDiv.append('<div class="card-header clearfix"><h4 class="card-title">' + units[udx].title + '</h4></div>');
+                                        unitHeader += '</div>';
+                                        var unitDiv = $('<div/>').addClass("card mb-4 cb-unit-roster cb-" + getUnitType(units[udx].title));
+                                        unitDiv.append(unitHeader);
 
                                         var positions = units[udx].Position;
-                                        var positionsDiv = $('<div/>').addClass('card-block');
+                                        // var positionsDiv = $('<div/>').addClass('card-block');
+                                        var positionsDiv = $('<table/>').addClass('unit-positions');
 
                                         var pstyle = getRankStyle('');
 
@@ -643,30 +597,17 @@ Copyright 2017 Joseph Porcelli
                                                 if (positions[pdx].title !== ''){
                                                     pstyle = getRankStyle(positions[pdx].title);
                                                 }
-                                            
-                                                // if (positions[pdx].exceptioncode !== ''){
-                                                //   var workcode = positions[pdx].workcode.toUpperCase();
-                                                //   if ((workcode.indexOf("ANL") !== -1)||(workcode.indexOf("TTN") !== -1)||(workcode.indexOf("KELLY") !== -1)||(workcode.indexOf("CTU") !== -1)||(workcode.indexOf("SICK") !== -1)||(workcode.indexOf("FSL") !== -1)){
-                                                //     continue;
-                                                //   }
-                                                // }
-
-                                          
+                                                                                      
                                                 var name = parseNameCaps(positions[pdx].name)[0];
                                                 
                                                 var timeText = formateTimeText(
                                                                     positions[pdx].startTime, 
-                                                                    positions[pdx].endTime); 
+                                                                    positions[pdx].endTime);
 
-                                                $('<div/>').addClass("input-group " + pstyle.class)
-                                                           .append('<span class="input-group-btn">'
-                                                                    + '<button class="btn" type="button">'
-                                                                    + '<i class="fa fa-fw ' + pstyle.icon
-                                                                    +  '" aria-hidden="true"></i> </button>'
-                                                                    + '</span>')
-                                                           .append('<div class="form-control"><span class="name float-left">' 
-                                                                    + name + '</span><span class="ts-times float-right">' 
-                                                                    + timeText + '</span></div>')
+                                                $('<tr/>').addClass(pstyle.class)
+                                                           .append('<td class="btn cb-pos-icon"><i class="fa fa-fw ' + pstyle.icon +  '" aria-hidden="true"></i></td>')
+                                                           .append('<td class="name">' + name + '</td>')
+                                                           .append('<td class="ts-times">' + timeText + '</td>')
                                                            .appendTo(positionsDiv);
                                             }
 
@@ -678,55 +619,82 @@ Copyright 2017 Joseph Porcelli
                             }
                         }   // END MULTIPLE UNIT PROCESSING
 
+                        // Prepare single units
+                        for (var udx = 0; udx < singleUnit.length; udx++){
+                            if (! singleUnit[udx].dot){
+                                var unit = singleUnit[udx];
 
-                        // Clear out old agenda
-                        
+                                var unitHeader = '<div class="card-header clearfix">' + unit.title;
+
+
+                                // Get notes if there are there
+                                if (unit.notes !== ''){
+                                    unitHeader += '<hr><p class="ts-notes">' + unit.notes + '</p>';
+                                }
+                                unitHeader += '</div>';
+                                var unitDiv = $('<div/>').addClass("card mb-4 cb-unit-roster cb-" + getUnitType(unit.title));
+                                    unitDiv.append(unitHeader);
+
+                                var positions = unit.Position;
+
+                                var positionsDiv = $('<table/>').addClass('unit-positions');
+
+                                var pstyle = getRankStyle('');
+
+                                for (var pdx = 0; pdx < positions.length; pdx++){
+                                    
+                                    // We only care about working positions with member's name
+                                    if ((positions[pdx].isWorking) && (positions[pdx].name !== '')){
+
+                                        // We want to get style information first
+                                        //      for the case were a position is off is listed first
+                                        if (positions[pdx].title !== ''){
+                                            pstyle = getRankStyle(positions[pdx].title);
+                                        }
+
+                                        var name = parseNameCaps(positions[pdx].name)[0];
+
+                                        var timeText = formateTimeText(
+                                                            positions[pdx].startTime, 
+                                                            positions[pdx].endTime);
+
+                                        $('<tr/>').addClass(pstyle.class)
+                                                           .append('<td class="btn cb-pos-icon"><i class="fa fa-fw ' + pstyle.icon +  '" aria-hidden="true"></i></td>')
+                                                           .append('<td class="name">' + name + '</td>')
+                                                           .append('<td class="ts-times">' + timeText + '</td>')
+                                                           .appendTo(positionsDiv);
+                                    }
+                                }
+                                unitDiv.append(positionsDiv);
+                                unitDiv.appendTo('.ts-units');
+                            }
+                        }   // END SINGLE UNIT PROCESSING
 
                         // Process notes
                         if ( notes.length ){
-                            var notesDiv = $('<div/>').addClass('card-block');
+                            var notesDiv = $('<table/>').addClass('unit-positions');
 
 
                             // Loop over notes displaying all station notes
                             for (var ndx = 0; ndx < notes.length; ndx++){
-                                if (notes[ndx].type == 'station'){
-                                    $('<p/>').addClass('card-text')
-                                             .append(notes[ndx].note)
-                                             .appendTo(notesDiv);
-                                }
+                                $('<tr/>').append('<td>&nbsp;</td>')
+                                           .append('<td class="name">' + notes[ndx].note + '</td>')
+                                           .appendTo(notesDiv);
                             }
 
-                            // Loop over notes displaying all unit notes
-                            for (var ndx = 0; ndx < notes.length; ndx++){
-                                if (notes[ndx].type == 'unit'){
-
-                                    $('<div/>').addClass("input-group cb-" + getUnitType(notes[ndx].owner))
-                                               .append('<span class="input-group-btn">'
-                                                        + '<button class="btn" type="button">'
-                                                        + notes[ndx].owner + '</button>'
-                                                        + '</span>')
-                                               .append('<div class="form-control">'
-                                                        + notes[ndx].note 
-                                                        + '</div>')
-                                               .appendTo(notesDiv);
-                                }
-                            }
-                            $('.ts-agenda').html($('<div/>').addClass('card cb-agenda')
-                                                            .append('<h3 class="card-header">Agenda</h3>')
+                            $('.ts-units').append($('<div/>').addClass('card mb-4 cb-unit-roster cb-other')
+                                                            .append('<div class="card-header clearfix">Station Events</div>')
                                                             .append(notesDiv));
                         } else {
                             $('.ts-agenda').html('');
                         }   // END PROCESSING NOTES
 
-
-                        // filter = 
                     }
                 } else {
-                  $(".cb-webstaff").html('<div class="ts-agenda"><div class="card cb-agenda">' +
-                          '<h3 class="card-header">Error Accessing Telestaff</h3>' +
-                           '<div class="card-block"><p class="card-text">' +
-                          json.data +
-                           '</p></div></div>');
+                    $(".cb-webstaff").html('<div class="alert alert-danger" role="alert">'
+                                          + '<h4 class="alert-heading">Error Accessing Telestaff.</h4>' 
+                                          + '<p><strong>Oh Snap</strong> something has gone terribly wrong.'
+                                          + ' Telestaff says ' + json.status_code.toString() + '!</p>');
                 }
 
                 // After successfully loading telestaff... let use schedule the next run
@@ -742,11 +710,11 @@ Copyright 2017 Joseph Porcelli
                   console.log("Assume no response from the server.");
                   fetchData();  
                 } else {
-                   $(".cb-webstaff").html('<div class="ts-agenda"><div class="card cb-agenda">' +
-                          '<h3 class="card-header">Error Accessing Telestaff</h3>' +
-                           '<div class="card-block"><p class="card-text">' +
-                          xhr.status +
-                           '</p></div></div>');
+                    $(".cb-webstaff").html('<div class="alert alert-danger" role="alert">'
+                                          + '<h4 class="alert-heading">Error Accessing Telestaff.</h4>' 
+                                          + '<p><strong>Oh Snap</strong> something has gone terribly wrong.'
+                                          + ' Telestaff says ' + xhr.status + '!</p>');
+
                 // After unsuccessfully loading telestaff... let use schedule the next run
                 // Then we set this to call itself every updateResolutions milliseconds
                
@@ -767,9 +735,9 @@ Copyright 2017 Joseph Porcelli
 
     ========================================================================= */
     function scaffoldRoster(){
-        $(ws_settings.targetElement).append('<div class="ts-agenda"></div>');
-        $(ws_settings.targetElement).append('<div class="card-group ts-units"></div>');
-        $(ws_settings.targetElement).append('<div class="ts-positions"></div>');
+        // $(ws_settings.targetElement).append('<div class="ts-agenda mb-4"></div>');
+        $(ws_settings.targetElement).append('<div class="card-deck mb-4 ts-units"></div>');
+        // $(ws_settings.targetElement).append('<div class="ts-positions mb-4"></div>');
 
         return this;    // we support chaining
     }   // scaffoldRoster()

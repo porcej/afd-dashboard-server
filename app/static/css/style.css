@@ -95,7 +95,8 @@ footer {
 }
 
 #alerts .A91Alert:nth-child(odd){
-	background-color: rgba(255, 255, 255, 0.12);
+	background-color: rgba(255, 255, 255, 0.07);
+	/*background-color: #101010;*/
 }
 
 .a911-alert{
@@ -203,7 +204,7 @@ footer {
 }
 
 .wx-day:nth-child(odd){
-	background-color: rgba(255, 255, 255, 0.12);
+	background-color: rgba(255, 255, 255, 0.07);
 }
 .wx-forecast.for5day .wx-day {
 	width: 20%;
@@ -286,107 +287,80 @@ font-size: 5vmin;
 /* *** Chalk-boord Clock end *** */
 
 .cb-webstaff {
-	display: flex;
-	flex-direction: column;
+	margin-top: 1.5rem!important;
+	margin-bottom: 1.5rem!important;
 }
 
-.cb-webstaff .ts-units, .cb-webstaff .ts-agenda {
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-}
-
-.cb-webstaff .ts-positions {
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-}
-
-.ts-positions > div {
-	display: flex;
-}
-
-
-.cb-agenda {
-	border-color: #f0ad4e;
-	background-color: transparent;
-}
-
-.cb-agenda h3{
-	font-size: 2.25rem;
-}
-
-.cb-agenda .card-header {
-	color: #fff;
-	background-color: #f0ad4e;
-    border-color: #f0ad4e;
-}
-
-
-.cb-engine, .cb-engine > .form-control  {
+.cb-engine {
 	border-color: #d9534f;
 	background-color: transparent;
 	color: white;
 }
 
-.cb-engine .card-header, .cb-engine > .input-group-btn > .btn{
+.cb-engine .card-header {
 	color: #f2dede;
-	background-color: #d9534f;
-	border-color: #d9534f;
+	/*background-color: #d9534f;*/
+	/*background-color: #ec1c24;
+	border-color: #CA3D2A;*/
+	/*border-color: #d9534f;*/
+	background-color: #EB3900;
+	border-color: #EB3900;
 }
 
 
-.cb-truck, .cb-truck > .form-control  {
+.cb-truck {
 	border-color: #5cb85c;
 	background-color: transparent;
 	color: white;
 }
 
-.cb-truck .card-header, .cb-truck > .input-group-btn > .btn {
+.cb-truck .card-header {
 	color: #dff0d8;
-	background-color: #3c763d;
-
+	/*background-color: #3c763d;*/
+	background-color: #00a551;
+	border-color: #00a551;
 }
 
-.cb-ems, .cb-ems > .form-control {
+.cb-ems {
 	border-color: #0275d8;
 	background-color: transparent;
 	color: white;
 }
 
-.cb-ems .card-header, .cb-ems > .input-group-btn > .btn {
+.cb-ems .card-header {
 	color: #d9edf7;
-	background-color: #0275d8;
-	border-color: #0275d8;
+	/*background-color: #0275d8;
+	border-color: #0275d8;*/
+	background-color: #2715a3;
+	border-color: #2715a3;
 }
 
-.cb-other, .cb-other > .form-control {
+.cb-other {
 	border-color: #272822;
 	background-color: transparent;
 	color: white;
-
 }
 
-.cb-ignore {
-	display: none;
-}
-
-.cb-other .card-header, .cb-other  > .input-group-btn > .btn{
+.cb-other .card-header{
 	color: #C8C8C8;
 	background-color: #272822;
 	border-color: #272822;
 }
 
-.cb-command, .cb-command > .form-control {
+.cb-command {
 	border-color: #FFDF00;
 	background-color: transparent;
 	color: white;
 }
 
-.cb-command .card-header, .cb-command > .input-group-btn > .btn{
+.cb-command .card-header {
 	background-color: #FFDF00;
 	border-color: #FFDF00;
 	color: #D2691E;
+}
+
+.cb-ignore {
+	display: none;
 }
 
 .cb-firefighter, .cb-firefighter > .form-control {
@@ -404,13 +378,6 @@ font-size: 5vmin;
 .cb-unit-roster > .card-block > .input-group{
 	margin: 2px;
 	/*margin: 0 20px;*/
-}
-
-.ts-agenda, .ts-units, .ts-positions {
-	margin-top: 15px;
-	margin-bottom: 15px;
-	display: flex;
-	flex-direction: row;
 }
 
 .ts-units .name, .ts-units i {
@@ -431,13 +398,56 @@ font-size: 5vmin;
 	font-size: 2.5rem;
 }
 
-.ts-agenda .input-group, .ts-units .input-group, .ts-positions .input-group{
-	margin-top: 10px;
-	margin-bottom: 10px;
-} 
+table.unit-positions {
+	text-align: left;
+}
 
-.ts-agenda{ margin-top: 30px; }
+table.unit-positions >tr >td:nth-child(odd) {
+	text-align: center;
 
+}
+
+table.unit-positions > tr:nth-child(odd){
+	background-color: rgba(255, 255, 255, 0.07);
+}
+
+.cb-command > .cb-pos-icon.btn {
+	background-color: #FFDF00;
+	color: #D2691E;
+	border-color: #D2691E;
+}
+
+.cb-ems > .cb-pos-icon.btn {
+	/*color: #d9edf7;*/
+	background-color: #2715a3;
+	border-color: #0275d8;
+	color: #0275d8;
+}
+
+.cb-other > .cb-pos-icon.btn {
+	color: #C8C8C8;
+	background-color: #272822;
+	/*border-color: #C8C8C8;*/
+}
+
+.cb-firefighter  > .cb-pos-icon.btn {
+	color: #C8C8C8;
+	background-color: transparent;
+	/*border-color: #C8C8C8;*/
+}
+
+
+.ts-units > .card {
+	min-width: 500px;
+	max-width: 600px;
+}
+
+p.ts-notes {
+	font-size: 0.75em;
+	margin: 0.1em auto ;
+	line-height: 0.8em;
+	margin-block-end: 0;
+}
 
 /*  Active 911 Units */
 
