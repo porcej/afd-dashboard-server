@@ -360,7 +360,7 @@ font-size: 5vmin;
 }
 
 .cb-ignore {
-	display: none;
+	display: none!important;
 }
 
 .cb-firefighter, .cb-firefighter > .form-control {
