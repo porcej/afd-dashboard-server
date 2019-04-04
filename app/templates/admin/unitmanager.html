@@ -1,17 +1,5 @@
-{% extends "admin/base.html" %}
+{% extends "admin/admin_base.html" %}
 {% block title %}Units {% endblock %}
-
-{% block nav %}
-<li class="nav-item">
-    <a class="nav-link" href="/admin/console/">Console </a>
-</li>
-<li class="nav-item">
-    <a class="nav-link" href="/admin/stationmanager/">Stations </a>
-</li>
-<li class="nav-item active">
-    <a class="nav-link" href="#">Units <span class="sr-only">(current)</span></a>
-</li>
-{% endblock %}
 
 {% block content %}
     <div id="unit-table" class="table-wrapper">

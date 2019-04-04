@@ -14,6 +14,7 @@ __copyright__ = "Copyright (c) 2018 Joseph Porcelli"
 __license__ = "MIT"
 
 from flask import render_template, current_app, request, jsonify
+from flask_login import current_user, login_required
 from app.admin import bp
 from app.models import Alert, Station, Unit
 from app import db, socketio
@@ -25,6 +26,8 @@ from sqlalchemy import exc
 # *====================================================================*
 @bp.route('/admin')
 @bp.route('/admin/')
+@bp.route('/admin/index')
+@login_required
 def admin():
     """
     A Really simple landing page for the admin tools
@@ -34,6 +37,7 @@ def admin():
 
 @bp.route('/admin/console')
 @bp.route('/admin/console/')
+@login_required
 def adminconsole():
     """
     A console for monitoring the dashboard system's interworkings
@@ -48,6 +52,7 @@ def adminconsole():
                             async_mode=current_app.config['ASYNC_MODE'])
 
 @bp.route('/admin/_station/new/', methods=['POST'])
+@login_required
 def _station_new():
     """
     Creates a station:
@@ -77,6 +82,7 @@ def _station_new():
 
 
 @bp.route('/admin/_station/delete/<name>/', methods=['POST'])
+@login_required
 def _station_delete(name=None):
     """
     Removes a station:
@@ -97,6 +103,7 @@ def _station_delete(name=None):
 
 
 @bp.route('/admin/_station/edit/<name>/', methods=['POST'])
+@login_required
 def _station_edit(name=None):
     """
     Editss a station:
@@ -127,6 +134,7 @@ def _station_edit(name=None):
 
 @bp.route('/admin/_station/', methods=['GET'])
 @bp.route('/admin/_station/<name>/', methods=['GET'])
+@login_required
 def _station(name=None):
     """
     Returns station a station or stations details
@@ -154,6 +162,7 @@ def _station(name=None):
             
 
 @bp.route('/admin/_unit/new/', methods=['POST'])
+@login_required
 def _unit_new():
     """
     Creates a unit:
@@ -190,6 +199,7 @@ def _unit_new():
 
 
 @bp.route('/admin/_unit/delete/<name>/', methods=['POST'])
+@login_required
 def _unit_delete(name=None):
     """
     Removes a unit:
@@ -210,6 +220,7 @@ def _unit_delete(name=None):
 
 
 @bp.route('/admin/_unit/edit/<name>/', methods=['POST'])
+@login_required
 def _unit_edit(name=None):
     """
     Editss a unit:
@@ -251,6 +262,7 @@ def _unit_edit(name=None):
 
 @bp.route('/admin/_unit/', methods=['GET'])
 @bp.route('/admin/_unit/<name>', methods=['GET'])
+@login_required
 def _unit(name=None):
     """
     A simple route ot handle request to list, add new, and delete
@@ -273,6 +285,7 @@ def _unit(name=None):
 
 @bp.route('/admin/stationmanager', methods=['GET'])
 @bp.route('/admin/stationmanager/', methods=['GET'])
+@login_required
 def stationmanager():
     """
     A Web GUI to manage stations and their names
@@ -296,6 +309,7 @@ def stationmanager():
 
 @bp.route('/admin/unitmanager', methods=['GET'])
 @bp.route('/admin/unitmanager/', methods=['GET'])
+@login_required
 def unitnmanager():
     """
     A Web GUI to manage units and their assigned stations

@@ -1,4 +1,4 @@
-{% extends "admin/base.html" %}
+{% extends "admin/admin_base.html" %}
 {% block title %}Console{% endblock %}
 {% block ready_script %}
     {{ super() }}
@@ -112,18 +112,6 @@
         return false;
     });
 
-{% endblock %}
-
-{% block nav %}
-<li class="nav-item active">
-    <a class="nav-link" href="#">Console <span class="sr-only">(current)</span></a>
-</li>
-<li class="nav-item">
-    <a class="nav-link" href="/admin/stationmanager/">Stations </a>
-</li>
-<li class="nav-item">
-    <a class="nav-link" href="/admin/unitmanager/">Units </a>
-</li>
 {% endblock %}
 
 {% block content %}

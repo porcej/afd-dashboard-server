@@ -20,12 +20,16 @@ import os
 from flask import Flask, current_app
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 from flask_migrate import Migrate
 from threading import Lock
 from config import Config
 
 
 db = SQLAlchemy()
+login = LoginManager()
+login.login_view = 'auth.login'
+login.login_message = "Please log in to access this page."
 migrate = Migrate()
 socketio = SocketIO()
 
@@ -45,6 +49,7 @@ def create_app(config_class=Config):
     # app.config.from_object(Config1())
 
     db.init_app(app)
+    login.init_app(app)
     migrate.init_app(app, db)
     socketio.init_app(app, async_mode=app.config['ASYNC_MODE'])
     # scheduler.init_app(app)
@@ -53,6 +58,10 @@ def create_app(config_class=Config):
     # Here we loaded HTTP Error Handling
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
+
+    # Load the authentication BluePrint for the admin console
+    from app.auth import bp as auth_bp
+    app.register_blueprint(auth_bp, url_prefix='/auth')
 
     # Here we load Telestaff handling
     from app.telestaff import bp as telestaff_bp

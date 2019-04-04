@@ -1,4 +1,4 @@
-{% extends "admin/base.html" %}
+{% extends "admin/admin_base.html" %}
 {% block title %}Stations{% endblock %}
 {% block ready_script %}
     {{ super() }}
@@ -12,15 +12,6 @@
 {% endblock %}
 
 {% block nav %}
-<li class="nav-item">
-    <a class="nav-link" href="/admin/console/">Console </a>
-</li>
-<li class="nav-item active">
-    <a class="nav-link" href="#">Stations <span class="sr-only">(current)</span></a>
-</li>
-<li class="nav-item">
-    <a class="nav-link" href="/admin/unitmanager/">Units </a>
-</li>
 {% endblock %}
 
 {% block content %}
