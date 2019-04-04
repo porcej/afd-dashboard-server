@@ -4,6 +4,7 @@ from flask_login import login_user, logout_user, current_user, UserMixin
 from app import login
 from app.auth import bp
 from app.auth.forms import LoginForm
+from app.models import Alert, Station, Unit
 
 class FakeUser(UserMixin):
     id = 1
@@ -33,7 +34,8 @@ def login():
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('admin.admin')
         return redirect(next_page)
-    return render_template('auth/login.html', title=('Sign In'), form=form)
+    stations = Station.query.order_by(Station.name.asc()).all()
+    return render_template('auth/login.html', title=('Sign In'), stations=stations, form=form)
 
 
 @bp.route('/logout')
