@@ -49,7 +49,7 @@ class Active911ClientWebSocket(Active911):
                 db.session.add(a)
                 db.session.commit()
             except:
-                self.app.logging.info("DB CONNECTION FAILURE")
+                self.app.logger.info("DB CONNECTION FAILURE")
                 db.session.rollback()
 
         # Alert the clients that we have a new alert
