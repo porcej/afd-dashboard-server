@@ -134,7 +134,6 @@ def _station_edit(name=None):
 
 @bp.route('/admin/_station/', methods=['GET'])
 @bp.route('/admin/_station/<name>/', methods=['GET'])
-@login_required
 def _station(name=None):
     """
     Returns station a station or stations details
