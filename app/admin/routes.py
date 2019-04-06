@@ -6,6 +6,7 @@ Server up a HOT Admin Console
 
 Changelog:
     - 2018-05-15 - Initial Commit
+    - 2019-04-06 - Added login required for admin routes
 """
 
 __author__ = "Joseph Porcelli (porcej@gmail.com)"
