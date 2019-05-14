@@ -310,10 +310,12 @@ Copyright 2019 Joseph Porcelli
 
     /* =========================================================================
     
-    wx - Default constructor, creats a wx object with api_key 
+    nws - Fetch and render WX from NWS exactly once
 
     ========================================================================= */
     function nws( settings ){
+        
+        console.log("Updateing WX.");
         $.ajax({
             type: 'GET',
             url: wx_settings.forecastUrl(),
@@ -333,8 +335,21 @@ Copyright 2019 Joseph Porcelli
                 fillForecast(result);
             }
         });
+
         return this;    // we support chaining
     }   // NWS()
+
+    /* =========================================================================
+    
+    run - Fetch and render WX from NWS every 
+        wx_settings.wxQueryInterval milliseconds
+
+    ========================================================================= */
+    function run( settings ){
+        setInterval(nws, wx_settings.wxQueryInterval);
+
+        return this;    // we support chaining
+    }   // run()
 
 
     /* =========================================================================
@@ -592,6 +607,7 @@ Copyright 2019 Joseph Porcelli
     // Now we export
     $.wx = wx;
     $.wx.nws = nws;
+    $.wx.run = run;
 
 
 })(jQuery);

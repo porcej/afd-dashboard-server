@@ -30,7 +30,8 @@ Copyright 2019 Joseph Porcelli
 
 		// Handle WX Forecast Display
 		$.wx({'forecastOffice': 'LWX', 'grid': '96,66',});
-		$.wx.nws();
+		$.wx.nws();	// Fetch initial WX data run
+		$.wx.run();	// Start WX Update Process
         
 		// Load Telestaff
 		$.webstaff({});
