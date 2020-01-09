@@ -13,13 +13,16 @@ Copyright 2017 Joseph Porcelli
     'use strict';
 
     var ws_settings = {
-            url                 : '/roster/',       // Where to get data '' is same domain
-            targetElement       : ".cb-webstaff",   // Target HTML Element
-            timer               : null,             // Var to hold timer to check for updates
-            updateResolution    : 900000,           // # of ms between time updates
+            url                 : '/roster/',           // Where to get data '' is same domain
+            targetElement       : ".cb-webstaff",       // Target HTML Element
+            alertElement        : ".cb-webstaff-alert", // Target Element for HTML Alerts
+            rosterElement       : ".cb-webstaff-roster",// Target element Roster
+            timer               : null,                 // Var to hold timer to check for updates
+            // updateResolution    : 30000,
+            updateResolution    : 900000,               // # of ms between time updates
             // updateResolution: 500,
-            // updateResolution: 60000,             // # of ms between time updates
-                                                    //    900000 -> 15 min
+            // updateResolution: 60000,                 // # of ms between time updates
+                                                        //    900000 -> 15 min
             filters             : {
                                     '201': ['Station 201'],
                                     '202': ['Station 202'],
@@ -33,7 +36,7 @@ Copyright 2017 Joseph Porcelli
                                     '210': ['Station 210']},
             credFunc            : function(){return "";},   // function to get credentials
             filterFunc          : function(){return "";}  // function to get filters
-    };
+    }; 
 
 
     /* =========================================================================
@@ -469,6 +472,8 @@ Copyright 2017 Joseph Porcelli
             url  : ws_settings.url + date,
             dataType : 'json',
             success: function(json, textStatus, request){
+                $(ws_settings.alertElement).remove();
+                console.log("Telestaff data received at " + moment().format('D MMM, YYYY - HH:mm:ss') + ".");
                 if (json.status_code.toString() == '200' ){
                     if (json.data.type == 'roster'){
 
@@ -563,7 +568,7 @@ Copyright 2017 Joseph Porcelli
                         var notes = [];
 
                         // Clear out old units html
-                        $(".ts-units").html('');
+                        $(ws_settings.rosterElement).html('');
 
                          // Prepare multiple units
                         for (var sdx=0; sdx < multipleUnits.length; sdx++ ){
@@ -613,7 +618,7 @@ Copyright 2017 Joseph Porcelli
 
                                         }
                                         unitDiv.append(positionsDiv);
-                                        unitDiv.appendTo(".ts-units");
+                                        unitDiv.appendTo(ws_settings.rosterElement);
                                     }
                                 }
                             }
@@ -666,7 +671,7 @@ Copyright 2017 Joseph Porcelli
                                     }
                                 }
                                 unitDiv.append(positionsDiv);
-                                unitDiv.appendTo('.ts-units');
+                                unitDiv.appendTo(ws_settings.rosterElement);
                             }
                         }   // END SINGLE UNIT PROCESSING
 
@@ -682,7 +687,8 @@ Copyright 2017 Joseph Porcelli
                                            .appendTo(notesDiv);
                             }
 
-                            $('.ts-units').append($('<div/>').addClass('card mb-4 cb-unit-roster cb-other')
+                            $(ws_settings.rosterElement).append($('<div/>')
+                                                            .addClass('card mb-4 cb-unit-roster cb-other')
                                                             .append('<div class="card-header clearfix">Station Events</div>')
                                                             .append(notesDiv));
                         } else {
@@ -691,10 +697,8 @@ Copyright 2017 Joseph Porcelli
 
                     }
                 } else {
-                    $(".cb-webstaff").html('<div class="alert alert-danger" role="alert">'
-                                          + '<h4 class="alert-heading">Error Accessing Telestaff.</h4>' 
-                                          + '<p><strong>Oh Snap</strong> something has gone terribly wrong.'
-                                          + ' Telestaff says ' + json.status_code.toString() + '!</p>');
+                    showAlert("Error Accessing Telestaff.", '<strong>Oh Snap</strong> something has gone terribly wrong.'
+                                              + ' Telestaff says ' + json.status_code.toString() + '!');
                 }
 
                 // After successfully loading telestaff... let use schedule the next run
@@ -707,13 +711,12 @@ Copyright 2017 Joseph Porcelli
             error: function(xhr, ajaxOpts, thrownError){
                 console.log("Response Error: ", xhr.status)
                 if (xhr.status === 0 ){ // if no response try again
-                  console.log("Assume no response from the server.");
-                  fetchData();  
+                    showAlert("Error Accessing Telestaff.", '<strong>Oh Snap</strong> Telestaff is not responding.!');
+                    console.log("No response from the Telestaff Server.");
+                    fetchData();  
                 } else {
-                    $(".cb-webstaff").html('<div class="alert alert-danger" role="alert">'
-                                          + '<h4 class="alert-heading">Error Accessing Telestaff.</h4>' 
-                                          + '<p><strong>Oh Snap</strong> something has gone terribly wrong.'
-                                          + ' Telestaff says ' + xhr.status + '!</p>');
+                    showAlert("Error Accessing Telestaff.", '<strong>Oh Snap</strong> something has gone terribly wrong.'
+                                                      + ' Telestaff says ' + xhr.status + '!');
 
                 // After unsuccessfully loading telestaff... let use schedule the next run
                 // Then we set this to call itself every updateResolutions milliseconds
@@ -728,6 +731,22 @@ Copyright 2017 Joseph Porcelli
         });
     }   // fetchData()
 
+    /* =========================================================================
+    
+    showAlert - displays an alert
+
+    ========================================================================= */
+    function showAlert(title="", body=""){
+        if (! $(ws_settings.alertElement).length){
+            $(ws_settings.targetElement).prepend('<div class="alert alert-danger ' 
+                                                + ws_settings.alertElement.substr(1)
+                                                + '" role="alert">');
+        }
+        $(ws_settings.alertElement).html('<h4 class="alert-heading">' + title + '</h4>' 
+                                            + '<p>' + body + '</p>');
+    }   // showAlert()
+
+
 
     /* =========================================================================
     
@@ -736,14 +755,14 @@ Copyright 2017 Joseph Porcelli
     ========================================================================= */
     function scaffoldRoster(){
         // $(ws_settings.targetElement).append('<div class="ts-agenda mb-4"></div>');
-        $(ws_settings.targetElement).append('<div class="card-deck mb-4 ts-units"></div>');
-        // $(ws_settings.targetElement).append('<div class="ts-positions mb-4"></div>');
-
-        return this;    // we support chaining
+        
+        $(ws_settings.targetElement).append('<div class="card-deck mb-4 '
+                                                + ws_settings.rosterElement.substr(1)
+                                                + '"></div>');
+         return this;    // we support chaining
     }   // scaffoldRoster()
 
-
-
+ 
     /* =========================================================================
     
     go - Kicks off setInterval to update clock
