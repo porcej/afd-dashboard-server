@@ -457,19 +457,27 @@ Copyright 2017 Joseph Porcelli
 
 
     /* =========================================================================
-    
-    fetchData - Gets roster data
-
-    ========================================================================= */
+     *
+     * fetchData - Gets roster dat from telestaff API.
+     *
+     * @param   {str|momentjs|date}     [date=''] - Date representing the date to
+     *                                          fetch roster date for
+     *                                          empty string returns current
+     *                                          date.
+     * @return  {boolean}   - True if a roster is returned, false otherwise.
+     *
+     *
+     * ====================================================================== */
     function fetchData(date){
-        date = date || '';
+        date = moment(date);    // Pass off handling of date types to Moment.js
+        
 
         var now = moment().format('D MMM, YYYY - HH:mm:ss');
         console.log("Updating Telestaff data. Starting at " + now);
 
         $.ajax({
             type : 'GET',
-            url  : ws_settings.url + date,
+            url  : ws_settings.url + date.format('YYYYMMDD'),
             dataType : 'json',
             success: function(json, textStatus, request){
                 $(ws_settings.alertElement).remove();
