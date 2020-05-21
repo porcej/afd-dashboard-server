@@ -12,19 +12,14 @@ Copyright 2017 Joseph Porcelli
     'use strict';
 
     var clock_settings = {
-            formatTime: 'HH:mm:ss',                 // Time format to display
-            formatDate: 'dddd, MMMM Do YYYY',       // Date format to display
-            targetClockElement: ".cb-clock",        // Target element for Clock
-            targetTimeElement: ".cb-time",          // Target time element
-            targetDateElement: ".cb-date",          // Target elment for Date
-            updateResolution: 1000,                 // # of ms between time updates
-            dateClassifier: function(date){         // Function to add class to date
-                return ".cb-date";
-            },
-            updateDateClassifer: function(date){    // Function to update date class
-                return true;
-            }
+            formatTime: 'HH:mm:ss',             // Time format to display
+            targetElement: "cb-time",           // Target time element
+            updateResolution: 1000,             // # of ms between time updates
     };
+
+    var intervalId = '';
+
+    // function targetEl()
 
 
     /* =========================================================================
@@ -35,6 +30,7 @@ Copyright 2017 Joseph Porcelli
     function clock( settings ){
         settings = settings || {};
         
+        // Update settings with those provided
         var clockKeys = getKeys(clock_settings);
         for (var kdx in clockKeys){
             var key = clockKeys[kdx];
@@ -43,9 +39,20 @@ Copyright 2017 Joseph Porcelli
             }
         }
 
-        scaffoldClock();
-        scaffoldDate();
-        go();
+        // Scaffold clock for each applied div
+        this.each(function(){
+            // $( this ).html("hello");      // Clear out contents of container
+            scaffoldClock($( this ));
+        });
+
+        // Kill clock if it is running
+        if (intervalId != ''){ 
+            kill();
+        }
+
+        // startClock
+        // if 
+        startClock(this);
         
         return this;    // we support chaining
     }   // clock()
@@ -72,64 +79,61 @@ Copyright 2017 Joseph Porcelli
     scaffoldClock - Builds HTML for clock
 
     ========================================================================= */
-    function scaffoldClock(){
-        $( clock_settings.targetClockElement ).each(function(idx){
-            var timeStr = moment().format(clock_settings.formatTime);
-            $( this ).append($( "<div/>" ).addClass("cb-time").html(timeStr));
+    function scaffoldClock(el){
+        el.html("");        // Clear out the element's html contents
+        var timeStr = moment().format(clock_settings.formatTime); 
 
-            timeStr = timeStr.replace(/[a-z0-9]/gmi, '8');  // Build the background time string
+        el.append($( "<div/>" ).addClass(clock_settings.targetElement)
+                               .html(timeStr));
 
-            // Build the background div off screen
-            $( this ).find(".cb-time").after($( "<div/>" ).addClass("cb-time-bkg").html(timeStr));
+        // Build the background time string
+        timeStr = timeStr.replace(/[a-z0-9]/gmi, '8');
 
-            // bring the background div onscreen and place under time
-            $( this ).find(".cb-time-bkg").css({ 
-                        top: $( this ).find(".cb-time").position().top, 
-                        left:  $( this ).find(".cb-time").position().left,
-                        height: $( this ).find(".cb-time").height(),
-                        width: $( this ).find(".cb-time").width()
-                    });
-        });
-        return this;    // we support chaining
+        // Build the background div off screen
+        el.append($( "<div/>" ).addClass("cb-time-bkg")
+                               .html(timeStr));
+
+        // To make things easy we will hold the target Element here
+        var elTarget = el.find("." + clock_settings.targetElement);
+
+        // bring the background div onscreen and place under time
+        el.find(".cb-time-bkg")
+          .css({ 
+                top: elTarget.position().top, 
+                left:  elTarget.position().left,
+                height: elTarget.height(),
+                width: elTarget.width()
+          });
     }   // scaffoldClock()
 
 
-
     /* =========================================================================
     
-    scaffoldDate - Builds out the HTML to support date display
+    startClock - Kicks off setInterval to update clock
 
     ========================================================================= */
-    function scaffoldDate(){
-        $( clock_settings.targetDateElement ).each(function( idx ) {
-            var now = moment();
-            $( this ).addClass(clock_settings.dateClassifier(now)); //_getShift() + "-shift-outline");
-            $( this ).html(now.format(clock_settings.formatDate));
-        });
-        return this;    // we support chaining
-    }   // scaffoldDate()
-
-
-    /* =========================================================================
-    
-    go - Kicks off setInterval to update clock
-
-    ========================================================================= */
-    function go(){
-        setInterval(function(){
-            $( clock_settings.targetTimeElement ).each(function( idx ) {
-                $( this ).html(moment().format(clock_settings.formatTime));
-            });
-            $( clock_settings.targetDateElement ).each(function( idx ) {
-                var now = moment();
-                $( this ).html(now.format(clock_settings.formatDate));
-                clock_settings.updateDateClassifer(clock_settings.targetDateElement, now);
+    function startClock(el){
+        intervalId = setInterval(function(){
+            el.each(function(){
+                $( this ).find("." + clock_settings.targetElement)
+                         .html(moment().format(clock_settings.formatTime));
             });
         }, clock_settings.updateResolution);
-    }   // go()
+    }   // startClock()
+
+
+    /* =========================================================================
+    
+    kill - kills updates
+
+    ========================================================================= */
+    function kill(){
+        clearInterval(intervalId);
+    }   // kill
 
 
     // Now we export
-    $.clock = clock;
+    $.fn.clock = clock;
+    $.fn.clock.kill = kill;
 
 })(jQuery, moment);
