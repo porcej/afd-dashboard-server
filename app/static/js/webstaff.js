@@ -23,6 +23,12 @@ Copyright 2017 Joseph Porcelli
             // updateResolution: 500,
             // updateResolution: 60000,                 // # of ms between time updates
                                                         //    900000 -> 15 min
+            rollOverTime        : "2400",               // Time of day to show
+                                                        // next day's roster HHMM
+                                                        // Note that setting this to 0000
+                                                        // will always show tomorrow's roster
+                                                        // while setting this to 2400
+                                                        // will always show the current day's roster        
             filters             : {
                                     '201': ['Station 201'],
                                     '202': ['Station 202'],
@@ -408,7 +414,6 @@ Copyright 2017 Joseph Porcelli
     ========================================================================= */
     function isArray(object) {
         return (object.constructor == Array);
-
     }   // isArray()
 
 
@@ -454,6 +459,25 @@ Copyright 2017 Joseph Porcelli
 
     }   // updateCreds()
 
+    /* =========================================================================
+     *
+     * determineRoster - Chooses which roster date roster to obtain based
+     *                      on ws_settings.rollOverTime.
+     *
+     * @return  {boolean}   - True if a roster is returned, false otherwise.
+     *
+     *
+     * ====================================================================== */    
+    function determineRoster(){
+        var rollOverDate = moment(moment().format("YYYYMMDD") 
+                            + "T" 
+                            + ws_settings.rollOverTime);
+        var date = moment();
+        if (date.isAfter(rollOverDate)){
+            date = date.add(1, "day");
+        }
+        return fetchData(date);
+    }   // determineRoster()
 
 
     /* =========================================================================
@@ -490,7 +514,9 @@ Copyright 2017 Joseph Porcelli
                                 return false;
                             }
 
-                            var filters = ws_settings.filters[afdDashboardConfig['station']].concat(afdDashboardConfig['home_units']);
+                            var filters = ws_settings
+                                            .filters[afdDashboardConfig['station']]
+                                            .concat(afdDashboardConfig['home_units']);
 
                             if (filters.indexOf(title) >= 0){
                                 return true;
@@ -712,7 +738,7 @@ Copyright 2017 Joseph Porcelli
                 // After successfully loading telestaff... let use schedule the next run
                 // Then we set this to call itself every updateResolutions milliseconds
                 ws_settings.timer = setTimeout(function(){
-                    fetchData();
+                    determineRoster();  // fetchData();
                 }, ws_settings.updateResolution);
 
             },
@@ -730,7 +756,7 @@ Copyright 2017 Joseph Porcelli
                 // Then we set this to call itself every updateResolutions milliseconds
                
                 ws_settings.timer = setTimeout(function(){
-                    fetchData();
+                    determineRoster();  // fetchData();
                 }, ws_settings.updateResolution / 15);
                   
                 }
@@ -777,7 +803,7 @@ Copyright 2017 Joseph Porcelli
 
     ========================================================================= */
     function go(){
-        return fetchData();
+        return determineRoster();  // fetchData();
     }   // go()
 
 
@@ -789,7 +815,7 @@ Copyright 2017 Joseph Porcelli
     function reset(){
         shutdown();
         scaffoldRoster();
-        return fetchData();
+        return determineRoster();  // fetchData();
     }   // reset()
 
 
