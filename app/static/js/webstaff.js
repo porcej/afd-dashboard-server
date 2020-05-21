@@ -24,7 +24,7 @@ Copyright 2017 Joseph Porcelli
             // updateResolution: 60000,                 // # of ms between time updates
                                                         //    900000 -> 15 min
             rollOverTime        : "2400",               // Time of day to show
-                                                        // next day's roster HHMM
+                                                        // next day's roster HHmm
                                                         // Note that setting this to 0000
                                                         // will always show tomorrow's roster
                                                         // while setting this to 2400
