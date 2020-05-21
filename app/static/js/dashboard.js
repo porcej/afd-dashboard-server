@@ -26,7 +26,7 @@ Copyright 2019 Joseph Porcelli
     	settings = options || window.afdDashboardConfig || {};
 
   		// Display clock
-		$.clock();
+		$(".cb-clock").clock();
 
 		// Handle WX Forecast Display
 		$.wx({'forecastOffice': 'LWX', 'grid': '96,66',});
@@ -252,7 +252,9 @@ Copyright 2019 Joseph Porcelli
 
 				if(alert) {
 					$("div#fullscreenAlert .A91AlertDetail").html(alert.to_detail_html());
+					$("#alertModal").find(".A91Alert").after($("<div/>").addClass("cb-timer"));
 					$("#alertModal").modal('show');
+					$(".cb-timer").timer();
 				}
 			});
 		};
@@ -266,6 +268,7 @@ Copyright 2019 Joseph Porcelli
 		 Active911.prototype.undraw_alert=function(alert) {
 		 	var alert_id = alert.get_item_value('id').toString();
 		 	$('#alerts > div[alert_id="' + alert_id + '"]').remove();
+		 	$(".cb-timer").timer.kill();
 		 };
 
 
@@ -278,7 +281,9 @@ Copyright 2019 Joseph Porcelli
 		 */
 		Active911.prototype.draw_alerted_alert=function(alert) {
 			$("div#fullscreenAlert .A91AlertDetail").html(alert.to_detail_html());
+			$("#alertModal").find(".A91Alert").after($("<div/>").addClass("cb-timer"));
 			$("#alertModal").modal('show');
+			$(".cb-timer").timer();
 			setTimeout(function() {$("#alertModal").modal('hide');}, 60000 * settings['popup_time']);
 		};
 
