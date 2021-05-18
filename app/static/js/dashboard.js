@@ -84,12 +84,16 @@ Copyright 2019 Joseph Porcelli
 		// Initiate Leaflet map
 		$.alertMap = L.map('alertMap', { zoomControl:false, attributionControl:false }).setView([38.8109981,-77.0910554], 17);
 		
-		L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
 									 '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
 									 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-			id: 'mapbox.streets'
+			tileSize: 512,
+			maxZoom: 18,
+			zoomOffset: -1,
+			id: 'mapbox/streets-v11',
+			accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'
 		}).addTo($.alertMap);
 			
 		$.alertMap.currentCallMarker = L.marker([38.8109981,-77.0910554]).addTo($.alertMap);
