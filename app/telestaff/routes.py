@@ -33,4 +33,5 @@ def roster(date=None):
                                     d_user=current_app.config['D_USER'], \
                                     d_pass=current_app.config['D_PASS'])
 
-    return telestaff.getTelestaff(kind='roster', date=date, jsonExport=True)
+    # return telestaff.getTelestaff(kind='roster', date=date, jsonExport=True)
+    return telestaff.getTelestaff(kind='rosterFull', date=date, jsonExport=True)
