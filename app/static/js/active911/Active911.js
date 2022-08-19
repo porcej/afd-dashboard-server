@@ -179,7 +179,7 @@ Active911.prototype.add_alert=function(alert, initializing) {
 			this.draw_alerted_alert(alert)
 		}
 
-		var units = alert.get_item_value("units").split(",");
+		var units = alert.get_item_value("units").split(" ");
 	 	for (var udx = 0; udx < units.length; udx++){
  	
 	 		// Put alerted unints on the bottom of the pop-over

@@ -377,7 +377,7 @@ function parseRadioFromDetails(details ){
   */
  A91Alert.prototype.to_html=function() {
 
- 	var units = this.get_item_value("units").split(","); //getUnitType
+ 	var units = this.get_item_value("units").split(" "); //getUnitType
  	var units_string = "";
 	 
 
@@ -431,7 +431,7 @@ function parseRadioFromDetails(details ){
 	$("div#fullscreenAlert .A91AlertDetail").attr("alert_id", this.get_item_value("id"));
 
 
- 	var units = this.get_item_value("units").split(","); //getUnitType
+ 	var units = this.get_item_value("units").split(" "); //getUnitType
  	var units_string = "";
  	var alerted_units = '';
  	var radioChannel = '';
