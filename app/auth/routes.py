@@ -1,5 +1,5 @@
 from flask import render_template,  current_app, redirect, url_for, flash, request
-from werkzeug.urls import url_parse
+from urllib.parse import urlparse
 from flask_login import login_user, logout_user, current_user, UserMixin
 from app import login
 from app.auth import bp
@@ -31,7 +31,7 @@ def login():
         # user.user_id = 1;
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
+        if not next_page or urlparse(next_page).netloc != '':
             next_page = url_for('admin.admin')
         return redirect(next_page)
     stations = Station.query.order_by(Station.name.asc()).all()

@@ -17,11 +17,11 @@ from config import Config
 
 # If we're using eventlet middleware (WSGI) we want to monkey patch
 # all of our sockets, connections, and threads
-try:
-    import eventlet
-    eventlet.monkey_patch()
-except ImportError:
-    pass    # Default to Werkzeug/Threading, so we don't have to do anything
+# try:
+#     import eventlet
+#     eventlet.monkey_patch()
+# except ImportError:
+#     pass    # Default to Werkzeug/Threading, so we don't have to do anything
 
 app = create_app()
 

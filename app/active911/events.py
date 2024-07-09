@@ -16,7 +16,7 @@ __license__ = "MIT"
 
 
 from flask import current_app
-from a911 import Active911
+from a911client import Active911
 from app.models import Alert
 from flask import session
 # from flask_sqlalchemy import SQLAlchemy
@@ -88,6 +88,13 @@ class AFDNamespace(Namespace):
         if these_alerts is None:
             emit('a911_alarm' "{'type': 'alarms', 'ids': []")
         else:
+            these_alerts = [tuple(alert) for alert in these_alerts]
+            from pprint import pprint
+            print("********************************")
+            print(pprint(these_alerts))
+            print(type(these_alerts))
+            print("********************************")
+
             emit('a911_alarm', {'type': 'alarms', 'ids': these_alerts })
 
     def on_my_event(self, message):
