@@ -89,12 +89,6 @@ class AFDNamespace(Namespace):
             emit('a911_alarm' "{'type': 'alarms', 'ids': []")
         else:
             these_alerts = [tuple(alert) for alert in these_alerts]
-            from pprint import pprint
-            print("********************************")
-            print(pprint(these_alerts))
-            print(type(these_alerts))
-            print("********************************")
-
             emit('a911_alarm', {'type': 'alarms', 'ids': these_alerts })
 
     def on_my_event(self, message):
