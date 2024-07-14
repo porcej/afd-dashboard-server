@@ -161,9 +161,9 @@ Active911.prototype.add_alert=function(alert, initializing) {
 	console.log("Adding alarm: " + alert.get_item_value("id") + " - " + alert.get_item_value("description"));
 
 	// Don't add the alert if its older than we want
-	if(alert.age() > this.settings.alarm_autoremove_age) {
-		return;
-	}
+	// if(alert.age() > this.settings.alarm_autoremove_age) {
+	// 	return;
+	// }
 	
 	this.alerts.push(alert);
 	

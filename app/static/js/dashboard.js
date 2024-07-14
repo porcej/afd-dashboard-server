@@ -160,6 +160,8 @@ Copyright 2019 Joseph Porcelli
 			} else if (msg.type === 'alarms'){
 				// If multiple alarms are received, parse them individually
 				for (var adx = msg.ids.length; adx > 0; adx--) {
+					console.log("===============")
+					console.log(msg.ids[adx-1]);
 					fetchAlert(msg.ids[adx-1]);
 				}
 			}
