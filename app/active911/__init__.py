@@ -18,4 +18,4 @@ from flask import current_app, Blueprint
 
 bp = Blueprint('active911', __name__)
 
-from app.active911 import routes, events
+from app.active911 import routes, events, client

@@ -150,11 +150,11 @@ class AFDNamespace(Namespace):
             broadcast=True)
 
     def on_connect(self):
-        global thread
-        with thread_lock:
-            if thread is None:
-                thread = socketio.start_background_task(active911_thread, \
-                            current_app._get_current_object())
+        # global thread
+        # with thread_lock:
+        #     if thread is None:
+        #         thread = socketio.start_background_task(active911_thread, \
+        #                     current_app._get_current_object())
             
         emit('my_response', {'data': 'Connected', 'count': 0})
 
