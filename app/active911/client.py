@@ -19,7 +19,6 @@ from flask import current_app
 from a911client import Active911
 from app.models import Alert
 from flask import session
-# from flask_sqlalchemy import SQLAlchemy
 from threading import Lock
 from flask_socketio import SocketIO, Namespace, emit, join_room, leave_room, \
     close_room, rooms, disconnect
@@ -31,10 +30,6 @@ from app.active911 import bp
 from app import db
 
 import logging
-# from app import thread, socketio, db
-
-
-# db = SQLAlchemy()
 
 # *====================================================================*
 #         Active 911 Web Socket Client
