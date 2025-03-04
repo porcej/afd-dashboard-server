@@ -19,19 +19,14 @@ from flask import current_app
 from a911client import Active911
 from app.models import Alert
 from flask import session
-# from flask_sqlalchemy import SQLAlchemy
 from threading import Lock
 from flask_socketio import SocketIO, Namespace, emit, join_room, leave_room, \
     close_room, rooms, disconnect
 from config import Config
 import json
-from app import thread_lock, thread, socketio
+from app import socketio
 from app.active911 import bp
 from app import db
-# from app import thread, socketio, db
-
-
-# db = SQLAlchemy()
 
 # *====================================================================*
 #         Active 911 Web Socket Client
@@ -150,12 +145,6 @@ class AFDNamespace(Namespace):
             broadcast=True)
 
     def on_connect(self):
-        # global thread
-        # with thread_lock:
-        #     if thread is None:
-        #         thread = socketio.start_background_task(active911_thread, \
-        #                     current_app._get_current_object())
-            
         emit('my_response', {'data': 'Connected', 'count': 0})
 
     def on_disconnect(self):

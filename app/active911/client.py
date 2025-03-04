@@ -6,6 +6,7 @@ Lets send out some Alerts
 
 Changelog:
     - 2018-05-15 - Initial Commit
+    - 2024-03-21 - Added delay and better error handling for initialization
 """
 
 
@@ -25,6 +26,7 @@ from flask_socketio import SocketIO, Namespace, emit, join_room, leave_room, \
 from config import Config
 import json
 import asyncio
+import time
 from app import thread_lock, thread, socketio
 from app.active911 import bp
 from app import db
@@ -57,18 +59,46 @@ class Active911ClientWebSocket(Active911):
                       namespace='/afd')
 
 def start_active911_client(app):
-    """Example of how to send server generated events to clients."""
+    """Initialize and start the Active911 client with retry logic and delay."""
     with app.app_context():
-        xmpp = Active911ClientWebSocket(device_code=app.config['ACTIVE_911_DEVICE_ID'], app=app)
-        # Here we remove any data in the DB so we can initialize it with
-        # Fresh data
-        try:
-            db.session.query(Alert).delete()
-            db.session.commit()
-        except:
-            app.logger.warn("DB CONNECTION FAILURE - Unable to initialize database")
-            db.session.rollback()
+        max_retries = 3
+        retry_delay = 5  # seconds
+        initialization_delay = 2  # seconds
 
-        xmpp.initialize()
-        xmpp.run()
+        # Add initial delay to allow for network setup
+        app.logger.info("Waiting {} seconds before Active911 client initialization...".format(initialization_delay))
+        time.sleep(initialization_delay)
+
+        for attempt in range(max_retries):
+            try:
+                app.logger.info("Initializing Active911 client (attempt {}/{})...".format(attempt + 1, max_retries))
+                
+                # Initialize the client
+                xmpp = Active911ClientWebSocket(device_code=app.config['ACTIVE_911_DEVICE_ID'], app=app)
+                
+                # Clear existing alerts from DB
+                try:
+                    db.session.query(Alert).delete()
+                    db.session.commit()
+                    app.logger.info("Successfully cleared existing alerts from database")
+                except Exception as db_error:
+                    app.logger.warn("Database cleanup failed: {}".format(str(db_error)))
+                    db.session.rollback()
+
+                # Initialize and start the client
+                xmpp.initialize()
+                app.logger.info("Active911 client initialized successfully")
+                xmpp.run()
+                break  # If we get here, initialization was successful
+
+            except Exception as e:
+                app.logger.error("Active911 client initialization failed (attempt {}/{}): {}".format(
+                    attempt + 1, max_retries, str(e)))
+                
+                if attempt < max_retries - 1:  # Don't sleep on the last attempt
+                    app.logger.info("Waiting {} seconds before retry...".format(retry_delay))
+                    time.sleep(retry_delay)
+                else:
+                    app.logger.error("Failed to initialize Active911 client after {} attempts".format(max_retries))
+                    raise  # Re-raise the exception if all retries failed
 
