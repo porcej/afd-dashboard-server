@@ -35,7 +35,3 @@ def roster(date=None):
     telestaff.do_login()
     response = telestaff.get_telestaff(kind='rosterFull', date=date)
     return json.dumps(response)
-    # if response.get("status_code", 0) == 200:
-    #     return json.dumps(response)
-    # else:
-    #     return jsdon.dumps(response)
