@@ -16,6 +16,7 @@ __license__ = "MIT"
 from festis import telestaff as ts
 from flask import render_template, current_app
 from app.telestaff import bp
+import json
 
 # *====================================================================*
 #         Routes
@@ -29,9 +30,11 @@ def roster(date=None):
     telestaff = ts.Telestaff(host=current_app.config['TS_SERVER'],  \
                                     t_user=current_app.config['TS_USER'], \
                                     t_pass=current_app.config['TS_PASS'], \
-                                    domain=current_app.config['TS_DOMAIN'],  \
-                                    d_user=current_app.config['D_USER'], \
-                                    d_pass=current_app.config['D_PASS'])
+                                    cookie=current_app.config['TS_COOKIE'])
 
-    # return telestaff.getTelestaff(kind='roster', date=date, jsonExport=True)
-    return telestaff.getTelestaff(kind='rosterFull', date=date, jsonExport=True)
+    telestaff.do_login()
+    response = telestaff.get_telestaff(kind='rosterFull', date=date)
+    if response.get("status_code", 0) == 200:
+        return json.dumps(response.get(data, ""))
+    else:
+        return jsdon.dumps(response)
