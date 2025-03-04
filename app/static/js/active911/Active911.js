@@ -160,16 +160,26 @@ Active911.prototype.add_alert=function(alert, initializing) {
 	// Add to array
 	console.log("Adding alarm: " + alert.get_item_value("id") + " - " + alert.get_item_value("description"));
 
-	// Don't add the alert if its older than we want
-	// if(alert.age() > this.settings.alarm_autoremove_age) {
-	// 	return;
-	// }
+	// Find the correct position to insert the alert based on timestamp
+	var insertIndex = this.alerts.length;
+	var alertTimestamp = alert.get_item_value("timestamp");
 	
-	this.alerts.push(alert);
+	for (var i = 0; i < this.alerts.length; i++) {
+		if (alertTimestamp > this.alerts[i].get_item_value("timestamp")) {
+			insertIndex = i;
+			break;
+		}
+	}
 	
+	// Insert the alert at the correct position
+	this.alerts.splice(insertIndex, 0, alert);
 	
 	// Draw alert on screen
-	this.draw_alert(alert);
+	if (insertIndex === 0) {
+		$("#alerts").prepend(alert.to_html());
+	} else {
+		$(alert.get_html_selector()).insertAfter(this.alerts[insertIndex - 1].get_html_selector());
+	}
 
 	// Consider Alerting on this alert
 	if (!initializing) {	/* We only want to alert if we are not loading old alerts */
