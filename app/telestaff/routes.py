@@ -30,11 +30,12 @@ def roster(date=None):
     telestaff = ts.Telestaff(host=current_app.config['TS_SERVER'],  \
                                     t_user=current_app.config['TS_USER'], \
                                     t_pass=current_app.config['TS_PASS'], \
-                                    cookie=current_app.config['TS_COOKIE'])
+                                    cookies=current_app.config['TS_COOKIE'])
 
     telestaff.do_login()
     response = telestaff.get_telestaff(kind='rosterFull', date=date)
-    if response.get("status_code", 0) == 200:
-        return json.dumps(response.get(data, ""))
-    else:
-        return jsdon.dumps(response)
+    return json.dumps(response)
+    # if response.get("status_code", 0) == 200:
+    #     return json.dumps(response)
+    # else:
+    #     return jsdon.dumps(response)
