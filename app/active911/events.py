@@ -6,6 +6,7 @@ Lets send out some Alerts
 
 Changelog:
     - 2018-05-15 - Initial Commit
+    - 2024-12-19 - Updated to use modern async a911client API
 """
 
 
@@ -16,7 +17,7 @@ __license__ = "MIT"
 
 
 from flask import current_app
-from a911client import Active911
+from a911client import Active911Client
 from app.models import Alert
 from flask import session
 from threading import Lock
@@ -24,6 +25,7 @@ from flask_socketio import SocketIO, Namespace, emit, join_room, leave_room, \
     close_room, rooms, disconnect
 from config import Config
 import json
+import asyncio
 from app import socketio
 from app.active911 import bp
 from app import db
@@ -31,11 +33,27 @@ from app import db
 # *====================================================================*
 #         Active 911 Web Socket Client
 # *====================================================================*
-class Active911ClientWebSocket(Active911):
-    def alert(self, alert_id, alert_msg):
+class Active911ClientWebSocket(Active911Client):
+    def __init__(self, device_code, app=None):
+        # Don't call super().__init__ here as it needs an event loop
+        self.device_code = device_code
+        self.app = app
+        self.socketio = socketio
+        self._client = None
+        
+    async def initialize(self):
+        """Initialize the client within an async context"""
+        if self._client is None:
+            self._client = Active911Client(self.device_code)
+            # Set up message handler
+            self._client.message_handler = self.on_alert
+        
+    async def on_alert(self, alert_data):
         """
-        This is where we process incoming message stanzas
+        This is where we process incoming alert data
         """
+        alert_id = alert_data.get('id')
+        alert_msg = alert_data
 
         # Save the alert to the db
         a = Alert(id=alert_id, content=json.dumps(alert_msg))
@@ -43,32 +61,50 @@ class Active911ClientWebSocket(Active911):
             try:
                 db.session.add(a)
                 db.session.commit()
-            except:
-                self.app.logger.info("DB CONNECTION FAILURE")
+            except Exception as e:
+                self.app.logger.info(f"DB CONNECTION FAILURE: {e}")
                 db.session.rollback()
 
         # Alert the clients that we have a new alert
-        socketio.emit('a911_alarm', \
-                      {'type': 'alarm', 'id': alert_id}, \
-                      namespace='/afd')
+        self.socketio.emit('a911_alarm', \
+                          {'type': 'alarm', 'id': alert_id}, \
+                          namespace='/afd')
 
-def active911_thread(app):
+    async def on_connection_state_change(self, state):
+        """Handle connection state changes"""
+        if self.app:
+            self.app.logger.info(f"Active911 connection state changed to: {state}")
+            
+    async def start(self):
+        """Start the client"""
+        if self._client is None:
+            await self.initialize()
+        
+        # The client should now be running and handling messages
+        # We'll keep this coroutine running to maintain the connection
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            self.app.logger.info("Active911 client stopped")
+
+async def active911_thread(app):
     """Example of how to send server generated events to clients."""
     with app.app_context():
-        xmpp = Active911ClientWebSocket(\
-            app.config['ACTIVE_911_DEVICE_ID'], \
-            app=app)
+        client = Active911ClientWebSocket(
+            device_code=app.config['ACTIVE_911_DEVICE_ID'], 
+            app=app
+        )
         # Here we remove any data in the DB so we can initialize it with
         # Fresh data
         try:
             db.session.query(Alert).delete()
             db.session.commit()
-        except:
-            app.logger.info("DB CONNECTION FAILURE")
+        except Exception as e:
+            app.logger.info(f"DB CONNECTION FAILURE: {e}")
             db.session.rollback()
 
-        xmpp.initialize()
-        xmpp.run()
+        await client.start()
 
 
 # *====================================================================*
