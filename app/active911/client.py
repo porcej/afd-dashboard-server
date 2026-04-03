@@ -2,12 +2,11 @@
 # -*- coding: ascii -*-
 
 """
-Lets send out some Alerts
+Active911 integration using a911client (Active911Client + asyncio).
 
 Changelog:
     - 2018-05-15 - Initial Commit
-    - 2024-03-21 - Added delay and better error handling for initialization
-    - 2024-12-19 - Updated to use modern async a911client API
+    - 2026-04-03 - Switched from removed Active911 symbol to Active911Client
 """
 
 
@@ -17,61 +16,87 @@ __copyright__ = "Copyright (c) 2018 Joseph Porcelli"
 __license__ = "MIT"
 
 
-from flask import current_app
-from a911client import Active911
-from app.models import Alert
-from flask import session
-from threading import Lock
-from flask_socketio import SocketIO, Namespace, emit, join_room, leave_room, \
-    close_room, rooms, disconnect
-from config import Config
-import json
 import asyncio
+import json
 import time
-import threading
-from app import thread_lock, thread, socketio
-from app.active911 import bp
-from app import db
 
-import logging
+from a911client import Active911Client
+from a911client.Active911Exceptions import Active911Error
 
-# *====================================================================*
-#         Active 911 Web Socket Client
-# *====================================================================*
-class Active911ClientWebSocket(Active911):
-    def alert(self, alert_id, alert_msg):
-        """
-        This is where we process incoming message stanzas
-        """
-        # Save the alert to the db
-        a = Alert(id=alert_id, content=json.dumps(alert_msg))
-        with self.app.app_context():
-            try:
-                db.session.add(a)
-                db.session.commit()
-                # logger.info("Alert received and added from Active 911.")
-                self.app.logger.info("Alert received and added from Active 911.")
-            except:
-                self.app.logger.warn("DB CONNECTION FAILURE WHEN ADDING ALERT")
-                db.session.rollback()
+from app import db, socketio
+from app.models import Alert
 
-        # Alert the clients that we have a new alert
-        socketio.emit('a911_alarm', \
-                      {'type': 'alarm', 'id': alert_id}, \
-                      namespace='/afd')
+_ACTIVE911_RETRY_SEC = 60
+
 
 def start_active911_client(app):
-    """Example of how to send server generated events to clients."""
+    """Run the Active911 client in this thread using an asyncio event loop."""
+
     with app.app_context():
-        xmpp = Active911ClientWebSocket(device_code=app.config['ACTIVE_911_DEVICE_ID'], app=app)
-        # Here we remove any data in the DB so we can initialize it with
-        # Fresh data
         try:
             db.session.query(Alert).delete()
             db.session.commit()
-        except:
-            app.logger.warn("DB CONNECTION FAILURE - Unable to initialize database")
+        except Exception as e:
+            app.logger.warning(
+                "DB CONNECTION FAILURE - Unable to initialize database: %s", e
+            )
             db.session.rollback()
 
-        xmpp.initialize()
-        xmpp.run()
+    device_code = app.config["ACTIVE_911_DEVICE_ID"]
+
+    async def main():
+        async with Active911Client(device_code, logger=app.logger) as client:
+
+            async def on_alert(alert_data):
+                if not isinstance(alert_data, dict):
+                    app.logger.warning(
+                        "Unexpected alert payload type: %s", type(alert_data)
+                    )
+                    return
+                alert_id = alert_data.get("id")
+                if alert_id is None:
+                    app.logger.warning("Alert payload missing id")
+                    return
+
+                row = Alert(id=alert_id, content=json.dumps(alert_data))
+                with app.app_context():
+                    try:
+                        db.session.add(row)
+                        db.session.commit()
+                        app.logger.info("Alert received and added from Active 911.")
+                    except Exception as e:
+                        app.logger.warning("DB failure when adding alert: %s", e)
+                        db.session.rollback()
+
+                socketio.emit(
+                    "a911_alarm",
+                    {"type": "alarm", "id": alert_id},
+                    namespace="/afd",
+                )
+
+            client.alert_handler = on_alert
+            await client.register_device()
+            await client.authenticate()
+            await client.active911_xmpp()
+
+    while True:
+        try:
+            asyncio.run(main())
+            break
+        except Active911Error as e:
+            with app.app_context():
+                app.logger.error(
+                    "Active911 client error (%s): %s. Retrying in %s s. "
+                    "Unauthorized usually means ACTIVE_911_DEVICE_ID is wrong, "
+                    "revoked, or the device is not registered for this agency.",
+                    type(e).__name__,
+                    e,
+                    _ACTIVE911_RETRY_SEC,
+                )
+        except Exception:
+            with app.app_context():
+                app.logger.exception(
+                    "Unexpected Active911 thread error; retrying in %s s.",
+                    _ACTIVE911_RETRY_SEC,
+                )
+        time.sleep(_ACTIVE911_RETRY_SEC)

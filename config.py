@@ -2,81 +2,77 @@
 # -*- coding: ascii -*-
 
 """
-Flask Blueprint to handle Telestaff
+Application configuration.
+
+All secrets and credentials MUST be supplied via environment variables (or a
+local .env file loaded by your process manager). Defaults that embedded
+passwords or tokens in this file were removed; rotate any values that were
+ever committed to version control.
 
 Changelog:
     - 2018-05-15 - Initial Commit
     - 2019-04-04 - Cleaned up a bit
+    - 2026-04-03 - Removed hardcoded secrets; env-only credentials
 
 """
 
 import os
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+# Load `.env` from the project root (same directory as this file). Python does
+# not read .env files unless something loads them into os.environ.
+_dotenv_path = os.path.join(basedir, ".env")
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(_dotenv_path, override=False)
+except ImportError:
+    pass
+
+
+def _truthy_env(name):
+    return os.environ.get(name, "").strip().lower() in ("1", "true", "yes", "on")
+
+
 class Config(object):
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'this is a secret key that you will never guess'
+    # Set SECRET_KEY in the environment. If DASHBOARD_DEBUG is true and it is
+    # unset, create_app() assigns an ephemeral key (sessions reset on restart).
+    SECRET_KEY = os.environ.get("SECRET_KEY")
 
-
-    # Database Stuff
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'app.db')
-        # 'mysql+pymysql://user:password@172.17.0.2/'
-
+    # Database
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or "sqlite:///" + os.path.join(
+        basedir, "app.db"
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Threading stuff
-    # Set this variable to "threading", "eventlet" or "gevent" to specify
-    # different async modes, or leave it set to None for the application to choose
-    # the best option based on installed packages.
-    # Using 'threading' mode for Python 3.13 compatibility
-    ASYNC_MODE = os.environ.get('ASYNC_MODE') or 'threading'
+    # SocketIO async mode (threading recommended for Python 3.13+)
+    ASYNC_MODE = os.environ.get("ASYNC_MODE") or "threading"
 
-    # Active911 Client stuff
-    ACTIVE_911_DEVICE_ID = os.environ.get('ACTIVE_911_DEVICE_ID') or '551742-ZQFT'
+    # Active911 - device registration id from Active911 (not committed)
+    ACTIVE_911_DEVICE_ID = os.environ.get("ACTIVE_911_DEVICE_ID")
 
+    # Telestaff - no defaults; set TS_* when using roster integration
+    TS_DOMAIN = os.environ.get("TS_DOMAIN", "")
+    TS_SERVER = os.environ.get("TS_SERVER", "")
+    TS_USER = os.environ.get("TS_USER")
+    TS_PASS = os.environ.get("TS_PASS")
+    TS_COOKIE = os.environ.get("TS_COOKIE")
 
-    # Telestaff Stuff
-    TS_DOMAIN = os.environ.get('TS_DOMAIN') or 'alexgov.net\\'
-    TS_SERVER = os.environ.get('TS_SERVER') or 'https://telestaff.alexandriava.gov'
+    # Admin UI - plain-text compare today; must be set in production
+    ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME")
+    ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 
-    TS_USER = os.environ.get('TS_USER') or 'dashboard_user'
-    TS_PASS = os.environ.get('TS_PASS') or '900Second900Second'
-    TS_COOKIE = os.environ.get('TS_COOKIE') or "pdIevTunx4Bg=p1|dom|aNEd+JnchP14yV2JB/fx9vTrodahUVydxwp8KiMgH5U=; pdIevTunx4Bg_legacy=p1|dom|aNEd+JnchP14yV2JB/fx9vTrodahUVydxwp8KiMgH5U=; pcIevTunx4Bg=di9N9QkZDVumh62kQKnrmfA7luvxCotG26DHVNcSH74=; pcIevTunx4Bg_legacy=di9N9QkZDVumh62kQKnrmfA7luvxCotG26DHVNcSH74=;"
-    # D_USER = os.environ.get('D_USER') or 'joseph.porcelli'
-    # # D_PASS = os.environ.get('D_PASS') or 'Xe75mnhm'
-    # D_PASS = 'helloErica_10'
+    DASHBOARD_DEBUG = _truthy_env("DASHBOARD_DEBUG")
 
-    # Admin User Creds
-    ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'porcej'
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'xe75mnhm'
+    DASHBOARD_HOST = os.environ.get("DASHBOARD_HOST") or "0.0.0.0"
 
+    DASHBOARD_PORT = int(os.environ.get("DASHBOARD_PORT", "5000"))
 
-    # Web UI and general app Stuff
-    if (os.environ.get('DASHBOARD_DEBUG') in ['True', 'TRUE', 'true', '1']):
-        DASHBOARD_DEBUG = True
-    else:
-        DASHBOARD_DEBUG = False
+    LOGGING_PATH = os.environ.get("LOGGING_PATH") or "log"
 
-    DASHBOARD_HOST = os.environ.get('DASHBOARD_HOST') or '0.0.0.0'
+    # Standard logging module levels (e.g. 20 = INFO, 1 = very verbose legacy default).
+    LOGGING_LEVEL = int(os.environ.get("LOGGING_LEVEL", "1"))
 
-    # DASHBOARD_PORT = int(os.environ.get('DASHBOARD_PORT')) or 8841
-    DASHBOARD_PORT = 8841
-
-    DASHBOARD_DEBUG = True
-
-
-    LOGGING_PATH = os.environ.get('LOGGING_PATH') or 'log'
-
-    # Logging Levels:
-    #
-    # Log Level     | Use Value
-    # --------------+-----------
-    # CRITICAL      | 50
-    # ERROR         | 40
-    # WARNING       | 30
-    # INFO          | 20
-    # DEBUG         | 10
-    # VERBOSE       | 1
-    # NOTSET        | 0
-
-    LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL') or 1   # VERBOSE
+    # Leaflet map tiles (public token for browser; do not commit - use .env)
+    MAPBOX_ACCESS_TOKEN = os.environ.get("MAPBOX_ACCESS_TOKEN") or ""

@@ -65,6 +65,15 @@ Active911.prototype.cull_old_alerts=function() {
 };
 
 /**
+ * Normalize alert timestamp to a number (Unix seconds) for sorting.
+ * JSON often delivers timestamps as strings; string comparison breaks sort order.
+ */
+Active911.prototype._alert_ts=function(alert) {
+	var v = parseFloat(alert.get_item_value("timestamp"));
+	return isNaN(v) ? 0 : v;
+};
+
+/**
  * Get a setting
  *
  * @param setting
@@ -160,25 +169,27 @@ Active911.prototype.add_alert=function(alert, initializing) {
 	// Add to array
 	console.log("Adding alarm: " + alert.get_item_value("id") + " - " + alert.get_item_value("description"));
 
-	// Find the correct position to insert the alert based on timestamp
+	// Newest-first: larger timestamp at smaller index
 	var insertIndex = this.alerts.length;
-	var alertTimestamp = alert.get_item_value("timestamp");
-	
+	var alertTimestamp = this._alert_ts(alert);
+
 	for (var i = 0; i < this.alerts.length; i++) {
-		if (alertTimestamp > this.alerts[i].get_item_value("timestamp")) {
+		if (alertTimestamp > this._alert_ts(this.alerts[i])) {
 			insertIndex = i;
 			break;
 		}
 	}
-	
-	// Insert the alert at the correct position
+
 	this.alerts.splice(insertIndex, 0, alert);
-	
-	// Draw alert on screen
+
+	// Insert HTML after the previous row in DOM order (newest at top).
+	// Do not use $(newAlertSelector).insertAfter(...) — the new node is not in the DOM yet.
+	var html = alert.to_html();
 	if (insertIndex === 0) {
-		$("#alerts").prepend(alert.to_html());
+		$("#alerts").prepend(html);
 	} else {
-		$(alert.get_html_selector()).insertAfter(this.alerts[insertIndex - 1].get_html_selector());
+		var prev = this.alerts[insertIndex - 1];
+		$(prev.get_html_selector()).after(html);
 	}
 
 	// Consider Alerting on this alert

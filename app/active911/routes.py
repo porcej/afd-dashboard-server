@@ -13,7 +13,9 @@ __version__ = "0.0.1"
 __copyright__ = "Copyright (c) 2018 Joseph Porcelli"
 __license__ = "MIT"
 
-from flask import render_template, jsonify
+import json
+
+from flask import jsonify
 from app.active911 import bp
 from app.models import Alert
 
@@ -25,8 +27,15 @@ from app.models import Alert
 def alarm(id=None):
     alert = Alert.query.filter_by(id=id).first()
     if alert is None:
-        return '{result: "error", message: "Alert not found"}'
-    return alert.content
+        return jsonify(result='error', message='Alert not found'), 404
+    if not alert.content:
+        return jsonify(result='error', message='Alert has no content'), 404
+    try:
+        payload = json.loads(alert.content)
+    except (json.JSONDecodeError, TypeError):
+        return jsonify(result='error', message='Invalid alert JSON'), 500
+    # dashboard.js fetchAlert() expects result/message (not raw JSON body)
+    return jsonify(result='success', message=payload)
 
 @bp.route('/alarms')
 def alarms(id=None):

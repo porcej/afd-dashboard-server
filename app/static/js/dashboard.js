@@ -83,18 +83,26 @@ Copyright 2019 Joseph Porcelli
 	function initMap(){
 		// Initiate Leaflet map
 		$.alertMap = L.map('alertMap', { zoomControl:false, attributionControl:false }).setView([38.8109981,-77.0910554], 17);
-		
-		L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-			maxZoom: 18,
-			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
-									 '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-									 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-			tileSize: 512,
-			maxZoom: 18,
-			zoomOffset: -1,
-			id: 'mapbox/streets-v11',
-			accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'
-		}).addTo($.alertMap);
+
+		var cfg = window.afdDashboardConfig || {};
+		var mapboxToken = cfg.mapboxAccessToken || '';
+		if (mapboxToken) {
+			L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+				attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+					'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+					'Imagery &copy; <a href="http://mapbox.com">Mapbox</a>',
+				tileSize: 512,
+				maxZoom: 18,
+				zoomOffset: -1,
+				id: 'mapbox/streets-v11',
+				accessToken: mapboxToken
+			}).addTo($.alertMap);
+		} else {
+			L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+			}).addTo($.alertMap);
+		}
 			
 		$.alertMap.currentCallMarker = L.marker([38.8109981,-77.0910554]).addTo($.alertMap);
 			
@@ -121,6 +129,10 @@ Copyright 2019 Joseph Porcelli
 	                settings['home_units_str'] = station.homed.toUpperCase();
 	                settings['alert_units'] = station.alert.toUpperCase().split(',');
 	                settings['home_units'] = station.homed.toUpperCase().split(',');
+	                // Active911.js uses global afdDashboardConfig for unit matching
+	                afdDashboardConfig['home_units_str'] = settings['home_units_str'];
+	                afdDashboardConfig['alert_units'] = settings['alert_units'];
+	                afdDashboardConfig['home_units'] = settings['home_units'];
 	            } else {
 	                console.warn("Station " + settings['station'] + " not found.");
 
@@ -158,12 +170,14 @@ Copyright 2019 Joseph Porcelli
 				// parse and send to screen.
 				fetchAlert(msg.id);
 			} else if (msg.type === 'alarms'){
-				// If multiple alarms are received, parse them individually
-				for (var adx = msg.ids.length; adx > 0; adx--) {
-					console.log("===============")
-					console.log(msg.ids[adx-1]);
-					fetchAlert(msg.ids[adx-1]);
+				// Fetch one at a time so add_alert runs in a stable order (parallel AJAX
+				// completes unpredictably and breaks timestamp ordering on screen).
+				var ids = [];
+				for (var j = 0; j < msg.ids.length; j++) {
+					var raw = msg.ids[j];
+					ids.push(Array.isArray(raw) ? raw[0] : raw);
 				}
+				fetchAlertsSequential(ids);
 			}
 		});
 
@@ -193,35 +207,77 @@ Copyright 2019 Joseph Porcelli
 
 	fetchAlert - Fetches alarm information for alarm with the given id.
 
+	@param id alert id
+	@param done optional callback after this request finishes (success or error)
+
 	========================================================================= */
-	function fetchAlert(id){
+	function fetchAlert(id, done){
+		done = (typeof done === 'function') ? done : function () {};
 		var alert_url = location.protocol + '//' + document.domain + ':' + location.port + '/alarm/' + id;
 		console.log("Received Alarm: " + id);
-		
+
 		$.ajax({
 			type: 'GET',
 			url: alert_url,
 			dataType : 'json',
 			success: function(json, textStatus, request){
-				if (json.result == 'success' ){
-					// Here we update the age since there is a possibility the alarm was stagnant on the server
-					json.message.age = Math.round(moment().diff(moment.unix(json.message.timestamp))/1000);
-					var a = new A91Alert(json.message);
-
-					// We don't want to Alert for alarms > 2 minutes
-					console.log("age: " + (json.message.age/60).toString());
-					if (json.message.age/60 > 2){
-						active911.add_alert(a, true);
+				if (json.result !== 'success' || !json.message) {
+					console.warn("fetchAlert: unexpected payload", json);
+					done();
+					return;
+				}
+				var msg = json.message;
+				// Age in seconds; Active911 may send seconds or milliseconds
+				if (msg.timestamp != null && msg.timestamp !== '') {
+					var ts = parseFloat(msg.timestamp);
+					if (isNaN(ts)) {
+						msg.age = 0;
 					} else {
-						active911.add_alert(a);
+						if (ts > 1e12) {
+							ts = ts / 1000;
+						}
+						msg.age = Math.round(moment().diff(moment.unix(ts)) / 1000);
 					}
-				} 
+				} else {
+					msg.age = 0;
+				}
+				var a = new A91Alert(msg);
+
+				console.log("age: " + (msg.age / 60).toString());
+				if (msg.age / 60 > 2) {
+					active911.add_alert(a, true);
+				} else {
+					active911.add_alert(a);
+				}
+				done();
 			},
 			error: function(xhr, ajaxOpts, thrownError){
 				console.log("Warning: Alarm #" + id + " not found.");
+				done();
 			}
 		});
 	}   // fetchAlert()
+
+
+	/* =========================================================================
+
+	fetchAlertsSequential - Load many alerts in order (preserves list order).
+
+	========================================================================= */
+	function fetchAlertsSequential(ids) {
+		if (!ids || !ids.length) {
+			return;
+		}
+		var queue = ids.slice();
+		function next() {
+			if (!queue.length) {
+				return;
+			}
+			var id = queue.shift();
+			fetchAlert(id, next);
+		}
+		next();
+	}
 
 
 	/* =========================================================================
@@ -291,6 +347,23 @@ Copyright 2019 Joseph Porcelli
 			$("#alertModal").modal('show');
 			$(".cb-timer").timer();
 			setTimeout(function() {$("#alertModal").modal('hide');}, 60000 * settings['popup_time']);
+		};
+
+		// add_alert inserts DOM nodes; draw_alert is not called. Bind row clicks here.
+		var _addAlertBase = Active911.prototype.add_alert;
+		Active911.prototype.add_alert = function (alert, initializing) {
+			_addAlertBase.call(this, alert, initializing);
+			var sel = alert.get_html_selector();
+			$(sel).off("click.afdDetail").on("click.afdDetail", function () {
+				var alert_id = parseInt($(this).attr("alert_id"), 10);
+				var al = active911.get_alert(alert_id);
+				if (al) {
+					$("div#fullscreenAlert .A91AlertDetail").html(al.to_detail_html());
+					$("#alertModal").find(".A91Alert").after($("<div/>").addClass("cb-timer"));
+					$("#alertModal").modal('show');
+					$(".cb-timer").timer();
+				}
+			});
 		};
 
 	}	// customizeActive911()
