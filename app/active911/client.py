@@ -12,7 +12,7 @@ for parsed alert payloads (see a911client.Active911Client docstring).
 
 Changelog:
     - 2018-05-15 - Initial Commit
-    - 2026-04-03 - Active911Client + asyncio; retry on exit or error
+    - 2026-04-03 - Active911Client + asyncio; retry on exit; parsing errors do not kill XMPP
 """
 
 
@@ -30,7 +30,7 @@ import zlib
 from datetime import datetime
 
 from a911client import Active911Client
-from a911client.Active911Exceptions import Active911ConnectionError, Active911Error
+from a911client.Active911Exceptions import Active911Error
 from sqlalchemy.exc import IntegrityError
 
 from app import db, socketio
@@ -321,6 +321,9 @@ def start_active911_client(app):
                         "message_id": message_id,
                     }
                     data = await client.post_request(request_data)
+                except Active911Error:
+                    raise
+                try:
                     app.logger.debug(
                         "Successfully fetched alert for message ID: %s", message_id
                     )
@@ -349,15 +352,22 @@ def start_active911_client(app):
                     handler = getattr(client, "alert_handler", None)
                     if handler:
                         await handler(msg)
-                except Exception as e:
-                    app.logger.error("Connection error while fetching alert: %s", e)
-                    raise Active911ConnectionError(f"Connection error: {str(e)}")
+                except Active911Error:
+                    raise
+                except Exception:
+                    app.logger.exception(
+                        "fetch_alert: failed to process payload for message_id=%r",
+                        message_id,
+                    )
 
             async def fetch_all_alerts_merge() -> None:
                 try:
                     app.logger.debug("Fetching all alerts (bulk)")
                     request_data = {"operation": "bulk_fetch_alerts"}
                     data = await client.post_request(request_data)
+                except Active911Error:
+                    raise
+                try:
                     app.logger.debug("Successfully fetched all alerts")
                     items = _normalize_bulk_message_items(
                         data.get("message"), app.logger
@@ -371,32 +381,50 @@ def start_active911_client(app):
                     app.logger.info("bulk_fetch_alerts: %s items", len(items))
                     seen_pks = set()
                     for idx, alert in enumerate(items):
-                        app.logger.info("Bulk alert: %s", alert)
-                        alert_obj = (
-                            json.loads(alert) if isinstance(alert, str) else alert
-                        )
-                        if not isinstance(alert_obj, dict):
-                            app.logger.warning(
-                                "Bulk alert %s not a dict: %s",
-                                idx,
-                                type(alert_obj).__name__,
+                        try:
+                            app.logger.info("Bulk alert: %s", alert)
+                            if isinstance(alert, str):
+                                try:
+                                    alert_obj = json.loads(alert)
+                                except json.JSONDecodeError:
+                                    app.logger.warning(
+                                        "bulk_fetch_alerts: invalid JSON at index %s",
+                                        idx,
+                                    )
+                                    continue
+                            else:
+                                alert_obj = alert
+                            if not isinstance(alert_obj, dict):
+                                app.logger.warning(
+                                    "Bulk alert %s not a dict: %s",
+                                    idx,
+                                    type(alert_obj).__name__,
+                                )
+                                continue
+                            alert_obj = dict(alert_obj)
+                            orig_id = alert_obj.get("id")
+                            orig_mid = alert_obj.get("message_id")
+                            pk = _bulk_row_pk(alert_obj, idx, seen_pks, app.logger)
+                            if orig_id is not None and _coerce_int_pk(orig_id) != pk:
+                                alert_obj["incident_id"] = orig_id
+                            alert_obj["id"] = pk
+                            if orig_mid is not None and str(orig_mid).strip() != "":
+                                alert_obj["message_id"] = orig_mid
+                            else:
+                                alert_obj["message_id"] = str(pk)
+                            await _persist_alert(alert_obj, emit_socket=False)
+                        except Active911Error:
+                            raise
+                        except Exception:
+                            app.logger.exception(
+                                "bulk_fetch_alerts: failed at index %s", idx
                             )
-                            continue
-                        alert_obj = dict(alert_obj)
-                        orig_id = alert_obj.get("id")
-                        orig_mid = alert_obj.get("message_id")
-                        pk = _bulk_row_pk(alert_obj, idx, seen_pks, app.logger)
-                        if orig_id is not None and _coerce_int_pk(orig_id) != pk:
-                            alert_obj["incident_id"] = orig_id
-                        alert_obj["id"] = pk
-                        if orig_mid is not None and str(orig_mid).strip() != "":
-                            alert_obj["message_id"] = orig_mid
-                        else:
-                            alert_obj["message_id"] = str(pk)
-                        await _persist_alert(alert_obj, emit_socket=False)
-                except Exception as e:
-                    app.logger.error("Connection error while fetching all alerts: %s", e)
-                    raise Active911ConnectionError(f"Connection error: {str(e)}")
+                except Active911Error:
+                    raise
+                except Exception:
+                    app.logger.exception(
+                        "bulk_fetch_alerts: failed after successful post_request"
+                    )
                 finally:
                     try:
                         _emit_alarms_snapshot(app)
