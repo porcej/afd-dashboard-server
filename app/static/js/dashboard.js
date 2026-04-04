@@ -170,6 +170,13 @@ Copyright 2019 Joseph Porcelli
 				// parse and send to screen.
 				fetchAlert(msg.id);
 			} else if (msg.type === 'alarms'){
+				// Full list from server: replace UI (avoids duplicates when get_a911_alarms
+				// ran before Active911 bulk finished, then a snapshot arrives).
+				$("#alerts").empty();
+				active911.alerts = [];
+				if (!msg.ids || !msg.ids.length) {
+					return;
+				}
 				// Fetch one at a time so add_alert runs in a stable order (parallel AJAX
 				// completes unpredictably and breaks timestamp ordering on screen).
 				var ids = [];
@@ -227,16 +234,18 @@ Copyright 2019 Joseph Porcelli
 					return;
 				}
 				var msg = json.message;
-				// Age in seconds; Active911 may send seconds or milliseconds
+				// Normalize to Unix seconds on msg.timestamp before A91Alert builds _alarm_date
+				// (Active911 often sends ms; moment.unix() expects seconds).
 				if (msg.timestamp != null && msg.timestamp !== '') {
 					var ts = parseFloat(msg.timestamp);
-					if (isNaN(ts)) {
-						msg.age = 0;
-					} else {
+					if (!isNaN(ts)) {
 						if (ts > 1e12) {
 							ts = ts / 1000;
 						}
+						msg.timestamp = ts;
 						msg.age = Math.round(moment().diff(moment.unix(ts)) / 1000);
+					} else {
+						msg.age = 0;
 					}
 				} else {
 					msg.age = 0;
