@@ -70,6 +70,12 @@ class Config(object):
 
     DASHBOARD_PORT = int(os.environ.get("DASHBOARD_PORT", "5000"))
 
+    # Gunicorn gthread worker (see wsgi.py / afddashboard.py). Single worker (-w 1) for Socket.IO.
+    GUNICORN_THREADS = int(os.environ.get("GUNICORN_THREADS", "20"))
+
+    # Flask expects DEBUG for app.debug (templates, tracebacks).
+    DEBUG = DASHBOARD_DEBUG
+
     LOGGING_PATH = os.environ.get("LOGGING_PATH") or "log"
 
     # Standard logging module levels (e.g. 20 = INFO, 1 = very verbose legacy default).

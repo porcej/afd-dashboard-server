@@ -1,5 +1,6 @@
 # Core Flask and web framework dependencies
 Flask>=2.3.3
+gunicorn>=22.0.0
 python-dotenv>=1.0.0
 
 Flask-Mail>=0.9.1
@@ -54,6 +55,10 @@ pytest-cov>=4.1.0
 black>=24.1.1
 isort>=5.13.2
 mypy>=1.8.0
+
+# Runtime dep for a911client (XMPP). Docker/README use --no-build-isolation for git lines.
+slixmpp>=1.8.0
+
 git+https://github.com/porcej/a911client.git
 git+https://github.com/porcej/festis.git
 git+https://github.com/maxcountryman/flask-login.git

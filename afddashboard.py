@@ -2,40 +2,47 @@
 # -*- coding: ascii -*-
 
 """
-A Production harness for AFD Dashboard
+Run the dashboard with Gunicorn (gthread worker; matches Flask-SocketIO threading).
 
-Requires port 80 is open
-
-Changelog:
-    - 2018-05-15 - Initial Commit
+Dockerfile invokes Gunicorn directly; this module is for local ``python afddashboard.py``.
 """
 
-import threading
-from app import create_app, db, socketio
-from app.models import Alert, Roster, Station, Unit
-from app.active911.client import start_active911_client
+import os
+import sys
+
 from config import Config
 
-# If we're using eventlet middleware (WSGI) we want to monkey patch
-# all of our sockets, connections, and threads
-# try:
-#     import eventlet
-#     eventlet.monkey_patch()
-# except ImportError:
-#     pass    # Default to Werkzeug/Threading, so we don't have to do anything
 
-app = create_app()
+def main():
+    bind = f"{Config.DASHBOARD_HOST}:{Config.DASHBOARD_PORT}"
+    threads = str(Config.GUNICORN_THREADS)
 
-if __name__ == '__main__':
-    # Run the socketIO Stuff here
+    args = [
+        sys.executable,
+        "-m",
+        "gunicorn",
+    ]
+    if Config.DASHBOARD_DEBUG:
+        args.append("--reload")
+    args.extend(
+        [
+            "-k",
+            "gthread",
+            "-w",
+            "1",
+            "--threads",
+            threads,
+            "--bind",
+            bind,
+            "--access-logfile",
+            "-",
+            "--error-logfile",
+            "-",
+            "wsgi:app",
+        ]
+    )
+    os.execvp(sys.executable, args)
 
-    print(app.config['ACTIVE_911_DEVICE_ID'])
-    
-    a911_client_thread = threading.Thread(target=start_active911_client, args=(app,))
-    a911_client_thread.daemon = True
-    a911_client_thread.start()
 
-    socketio.run(app=app, \
-                 host=Config.DASHBOARD_HOST, \
-                 port=Config.DASHBOARD_PORT, \
-                 debug=Config.DASHBOARD_DEBUG)
+if __name__ == "__main__":
+    main()
