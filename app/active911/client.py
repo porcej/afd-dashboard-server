@@ -59,10 +59,16 @@ def _coerce_int_pk(value):
     except ValueError:
         try:
             f = float(s)
-            if f == int(f):
-                return int(f)
         except ValueError:
-            pass
+            return None
+        if not math.isfinite(f):
+            return None
+        try:
+            as_int = int(f)
+        except (OverflowError, ValueError):
+            return None
+        if f == as_int:
+            return as_int
     return None
 
 

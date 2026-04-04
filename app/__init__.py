@@ -66,7 +66,8 @@ def create_app(config_class=Config):
 
     if not app.testing and not app.config.get("DASHBOARD_DEBUG"):
         for _key in ("ADMIN_USERNAME", "ADMIN_PASSWORD"):
-            if not app.config.get(_key):
+            _v = app.config.get(_key)
+            if _v is None or (isinstance(_v, str) and not _v.strip()):
                 raise RuntimeError(
                     f"{_key} must be set in the environment when DASHBOARD_DEBUG is false."
                 )
@@ -78,7 +79,7 @@ def create_app(config_class=Config):
         u = app.config.get("ADMIN_USERNAME")
         p = app.config.get("ADMIN_PASSWORD")
         need_username = u is None or (isinstance(u, str) and not u.strip())
-        need_password = p is None or p == ""
+        need_password = p is None or (isinstance(p, str) and not p.strip())
         if need_username:
             app.config["ADMIN_USERNAME"] = "dev"
         if need_password:
