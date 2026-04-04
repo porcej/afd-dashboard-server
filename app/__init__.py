@@ -15,8 +15,11 @@ __copyright__ = "Copyright (c) 2018 Joseph Porcelli"
 __license__ = "MIT"
 
 import logging
-from logging.handlers import RotatingFileHandler
 import os
+import secrets
+import warnings
+from logging.handlers import RotatingFileHandler
+
 from flask import Flask, current_app
 from flask_socketio import SocketIO
 from flask_sqlalchemy import SQLAlchemy
@@ -47,6 +50,46 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     # app.config.from_object(Config1())
+
+    if not app.config.get("SECRET_KEY"):
+        if app.config.get("DASHBOARD_DEBUG"):
+            app.config["SECRET_KEY"] = secrets.token_hex(32)
+            warnings.warn(
+                "SECRET_KEY is not set; using an ephemeral key (sessions reset on each "
+                "restart). Set SECRET_KEY in the environment for stable sessions.",
+                stacklevel=1,
+            )
+        else:
+            raise RuntimeError(
+                "SECRET_KEY must be set in the environment when DASHBOARD_DEBUG is false."
+            )
+
+    if not app.testing and not app.config.get("DASHBOARD_DEBUG"):
+        for _key in ("ADMIN_USERNAME", "ADMIN_PASSWORD"):
+            _v = app.config.get(_key)
+            if _v is None or (isinstance(_v, str) and not _v.strip()):
+                raise RuntimeError(
+                    f"{_key} must be set in the environment when DASHBOARD_DEBUG is false."
+                )
+
+    # auth/routes.py compares submitted credentials to these strings; if they stay
+    # None, any non-None form input fails the check. When debugging locally without
+    # ADMIN_* in the environment, use fixed dev credentials (with warning).
+    if app.config.get("DASHBOARD_DEBUG"):
+        u = app.config.get("ADMIN_USERNAME")
+        p = app.config.get("ADMIN_PASSWORD")
+        need_username = u is None or (isinstance(u, str) and not u.strip())
+        need_password = p is None or (isinstance(p, str) and not p.strip())
+        if need_username:
+            app.config["ADMIN_USERNAME"] = "dev"
+        if need_password:
+            app.config["ADMIN_PASSWORD"] = "dev"
+        if need_username or need_password:
+            warnings.warn(
+                "ADMIN_USERNAME and/or ADMIN_PASSWORD not set; using dev/dev for local "
+                "debug only. Set both in the environment for production.",
+                stacklevel=1,
+            )
 
     db.init_app(app)
     login.init_app(app)

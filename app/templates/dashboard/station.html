@@ -53,7 +53,8 @@
             'popup_time': 2,
             'alert_units': '',
             'home_units': '',
-            'refresh_time': 24    // Hours
+            'refresh_time': 24,    // Hours
+            'mapboxAccessToken': {{ config.MAPBOX_ACCESS_TOKEN | tojson }}
         };
     </script>
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>

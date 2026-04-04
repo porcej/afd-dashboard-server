@@ -1,5 +1,6 @@
 # Core Flask and web framework dependencies
 Flask>=2.3.3
+python-dotenv>=1.0.0
 
 Flask-Mail>=0.9.1
 Flask-Migrate>=4.0.5
