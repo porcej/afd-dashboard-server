@@ -1,0 +1,4 @@
+# Install after requirements.txt (needs --no-build-isolation: a911client imports slixmpp during wheel metadata).
+git+https://github.com/porcej/a911client.git
+git+https://github.com/porcej/festis.git
+git+https://github.com/maxcountryman/flask-login.git
