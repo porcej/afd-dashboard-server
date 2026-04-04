@@ -10,11 +10,13 @@ These instructions will get you a copy of the project up and running on your loc
 
 This module is designed to work with `Python >=3.5`.  `Python 2` may work, your milage may very.  The `requirements.txt` file contains the required libraries.  The use of Python Virtual Envirnments is highly recommended.  This author assums the user posses a working knowldge of Python and the tools available in the user's choosen envirnment.
 
-The `requirments.txt` file contains a listing of the required Python Modules.  These can be installed using `pip` with the `-r` option.
+Install PyPI dependencies, then VCS packages (`a911client` needs `slixmpp` already present and `--no-build-isolation` during its build):
 
 ```
-python >=  3.5
+python >= 3.5   # use a current 3.x (3.12+ recommended)
 $ pip install -r requirements.txt
+$ pip install setuptools wheel flit-core
+$ pip install --no-build-isolation -r requirements-vcs.txt
 ```
 
 ### Getting Started
@@ -90,13 +92,7 @@ Compose reads a project `.env` for `${VAR}` substitution in the YAML. **`docker 
 
 For a one-off build without Compose: `docker build -t afd-dashboard .` then `docker run --rm -p 5000:5000 -e DASHBOARD_DEBUG=true ... afd-dashboard`.
 
-If `pip install -r requirements.txt` fails on the `git+https://…` lines, install PyPI packages first, then PEP 517 backends (needed for `--no-build-isolation` git installs on minimal environments), then VCS URLs:
-
-```bash
-sed '/^git+/d' requirements.txt > /tmp/req-pypi.txt && pip install -r /tmp/req-pypi.txt
-pip install setuptools wheel flit-core
-grep '^git+' requirements.txt | xargs -I {} pip install --no-build-isolation {}
-```
+If a plain `pip install -r requirements.txt` misses the git deps, run the same sequence as above: `requirements.txt` then `setuptools wheel flit-core` then `pip install --no-build-isolation -r requirements-vcs.txt`.
 
 **Docker build and GitHub:** The image must clone `git+https://github.com/...` dependencies during `docker build`. If you see `Could not resolve host: github.com` (or similar), the build environment has no working DNS or outbound HTTPS. Fix network/DNS on the host (Docker Desktop → Settings → network/DNS, VPN split-tunnel, corporate proxy). On Linux, `docker build --network=host -t afd-dashboard .` sometimes helps when bridge DNS is broken. Air-gapped builds need wheels or vendored copies of those packages instead of live `git clone`.
 

@@ -1,35 +1,35 @@
 # Core Flask and web framework dependencies
-Flask>=2.3.3
-gunicorn>=22.0.0
+Flask>=3.0.0,<4
+gunicorn>=23.0.0
 python-dotenv>=1.0.0
 
 Flask-Mail>=0.9.1
 Flask-Migrate>=4.0.5
 Flask-SocketIO>=5.3.6
-Flask-SQLAlchemy>=3.0.5
-Flask-WTF>=1.1.1
-Werkzeug>=2.3.7
+Flask-SQLAlchemy>=3.1.0
+Flask-WTF>=1.2.0
+Werkzeug>=3.0.0
 Jinja2>=3.1.2
-itsdangerous>=2.1.2
+itsdangerous>=2.2.0
 
 # Database and ORM
-SQLAlchemy>=2.0.23
-alembic>=1.12.1
+SQLAlchemy>=2.0.30
+alembic>=1.13.0
 
 # Web scraping and HTTP requests
 beautifulsoup4>=4.12.2
-requests>=2.31.0
+requests>=2.32.0
 requests-ntlm>=1.2.0
 
 # Authentication and security
 pyasn1>=0.6.1
 pyasn1-modules>=0.3.0
-pyOpenSSL>=23.3.0
+pyOpenSSL>=24.0.0
 python-ntlm>=1.1.0
 
 # WebSocket and real-time communication
-python-socketio>=5.9.0
-python-engineio>=4.7.1
+python-socketio>=5.11.0
+python-engineio>=4.8.0
 # eventlet>=0.33.3  # Commented out due to Python 3.13 compatibility issues
 
 # Task scheduling
@@ -43,7 +43,7 @@ WTForms>=3.1.0
 # festis      # Telestaff integration library - may need custom installation
 DateTime>=4.2
 pyyaml>=6.0.2
-aiohttp>=3.12.13
+aiohttp>=3.10.0
 
 # Type hints and utilities
 typing-extensions>=4.9.0
@@ -56,9 +56,5 @@ black>=24.1.1
 isort>=5.13.2
 mypy>=1.8.0
 
-# Runtime dep for a911client (XMPP). Docker/README use --no-build-isolation for git lines.
+# Runtime dep for a911client (XMPP). Git deps are in requirements-vcs.txt (two-step install).
 slixmpp>=1.8.0
-
-git+https://github.com/porcej/a911client.git
-git+https://github.com/porcej/festis.git
-git+https://github.com/maxcountryman/flask-login.git

@@ -19,13 +19,11 @@ WORKDIR /app
 # a911client can import slixmpp during metadata. Non-isolated builds still invoke
 # PEP 517 backends (setuptools.build_meta, flit_core.buildapi); slim images do not
 # always ship those, so install them explicitly before the git installs.
-COPY requirements.txt .
+COPY requirements.txt requirements-vcs.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && sed '/^git+/d' requirements.txt > /tmp/requirements-pypi.txt \
-    && pip install --no-cache-dir -r /tmp/requirements-pypi.txt \
+    && pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir setuptools wheel flit-core \
-    && grep '^git+' requirements.txt | xargs -r -I {} pip install --no-cache-dir --no-build-isolation {} \
-    && rm -f /tmp/requirements-pypi.txt
+    && pip install --no-cache-dir --no-build-isolation -r requirements-vcs.txt
 
 COPY . .
 
