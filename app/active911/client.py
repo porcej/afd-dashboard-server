@@ -24,6 +24,7 @@ __license__ = "MIT"
 
 import asyncio
 import json
+import math
 import time
 import zlib
 from datetime import datetime
@@ -208,9 +209,16 @@ def _incident_utc(alert_data):
         sec = float(raw)
     except (TypeError, ValueError):
         return None
+    if not math.isfinite(sec):
+        return None
     if sec > 1e12:
         sec = sec / 1000.0
-    return datetime.utcfromtimestamp(sec)
+    try:
+        return datetime.utcfromtimestamp(sec)
+    except (OSError, OverflowError, ValueError):
+        # NaN/inf already filtered; still catch out-of-range for platform time_t,
+        # and any remaining invalid values so one bad payload cannot kill XMPP.
+        return None
 
 
 def start_active911_client(app):
