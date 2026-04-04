@@ -70,6 +70,36 @@ Next, you will want to launch the server:
 $ python test_app.py
 ```
 
+### Docker
+
+Build and run with [Docker Compose](https://docs.docker.com/compose/) (see `docker-compose.yml`):
+
+```bash
+cp .env.example .env   # edit: secrets, ACTIVE_911_DEVICE_ID, etc.
+docker compose build
+docker compose up
+```
+
+The image runs `flask db upgrade` on startup, then **Gunicorn** (`gthread` worker, `wsgi:app`) on **port 5000 inside the container**. Compose maps **`HOST_PORT` → 5000** (default **8000** when unset; see `.env.example`). Optional compose-only knobs: **`COMPOSE_IMAGE`**, **`DOCKER_RESTART`**. Do not rely on `DASHBOARD_PORT` in `.env` for Docker: that value is for local `python afddashboard.py` only — if it matched your public port (e.g. 8000), Gunicorn would listen on the wrong port inside the container and the browser would see **ERR_CONNECTION_RESET**.
+
+SQLite is stored on the `dashboard-data` volume at `/data/app.db` when `DATABASE_URL` defaults to `sqlite:////data/app.db`. Override `DATABASE_URL` for PostgreSQL or another backend. Locally you can still run `python afddashboard.py` (also Gunicorn).
+
+`docker-compose.yml` sets `DASHBOARD_DEBUG` to `true` by default so `SECRET_KEY` is not required for local runs (the app generates an ephemeral key). For production, set `DASHBOARD_DEBUG=false` and provide `SECRET_KEY`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD` in `.env`.
+
+Compose reads a project `.env` for `${VAR}` substitution in the YAML. **`docker compose --env-file .env` does not inject that file into containers by itself** — the compose file uses `env_file: .env` on the service so variables like `SECRET_KEY` and `ACTIVE_911_DEVICE_ID` reach the app. Use a `.env` next to `docker-compose.yml` (or adjust `env_file` / use `environment:` explicitly).
+
+For a one-off build without Compose: `docker build -t afd-dashboard .` then `docker run --rm -p 5000:5000 -e DASHBOARD_DEBUG=true ... afd-dashboard`.
+
+If `pip install -r requirements.txt` fails on the `git+https://…` lines, install PyPI packages first, then PEP 517 backends (needed for `--no-build-isolation` git installs on minimal environments), then VCS URLs:
+
+```bash
+sed '/^git+/d' requirements.txt > /tmp/req-pypi.txt && pip install -r /tmp/req-pypi.txt
+pip install setuptools wheel flit-core
+grep '^git+' requirements.txt | xargs -I {} pip install --no-build-isolation {}
+```
+
+**Docker build and GitHub:** The image must clone `git+https://github.com/...` dependencies during `docker build`. If you see `Could not resolve host: github.com` (or similar), the build environment has no working DNS or outbound HTTPS. Fix network/DNS on the host (Docker Desktop → Settings → network/DNS, VPN split-tunnel, corporate proxy). On Linux, `docker build --network=host -t afd-dashboard .` sometimes helps when bridge DNS is broken. Air-gapped builds need wheels or vendored copies of those packages instead of live `git clone`.
+
 
 ## Using the Dashboard
 

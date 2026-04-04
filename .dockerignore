@@ -1,0 +1,41 @@
+# Git and VCS
+.git
+.gitignore
+*.md
+!README.md
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.mypy_cache
+.ruff_cache
+*.egg-info
+.eggs
+dist
+build
+venv
+.env
+.env.*
+!.env.example
+
+# IDE / OS
+.idea
+.vscode
+.DS_Store
+
+# Logs and local DB (mount a volume for persistent data instead)
+log
+*.db
+instance
+
+# Tests / coverage
+.coverage
+htmlcov
+.tox
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
