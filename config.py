@@ -59,7 +59,8 @@ class Config(object):
     TS_PASS = os.environ.get("TS_PASS")
     TS_COOKIE = os.environ.get("TS_COOKIE")
 
-    # Admin UI - plain-text compare today; must be set in production
+    # Admin UI - plain-text compare in auth/routes.py. When DASHBOARD_DEBUG is true,
+    # create_app() sets ADMIN_USERNAME/ADMIN_PASSWORD to dev/dev if unset (see app/__init__.py).
     ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME")
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD")
 

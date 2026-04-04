@@ -71,6 +71,25 @@ def create_app(config_class=Config):
                     f"{_key} must be set in the environment when DASHBOARD_DEBUG is false."
                 )
 
+    # auth/routes.py compares submitted credentials to these strings; if they stay
+    # None, any non-None form input fails the check. When debugging locally without
+    # ADMIN_* in the environment, use fixed dev credentials (with warning).
+    if app.config.get("DASHBOARD_DEBUG"):
+        u = app.config.get("ADMIN_USERNAME")
+        p = app.config.get("ADMIN_PASSWORD")
+        need_username = u is None or (isinstance(u, str) and not u.strip())
+        need_password = p is None or p == ""
+        if need_username:
+            app.config["ADMIN_USERNAME"] = "dev"
+        if need_password:
+            app.config["ADMIN_PASSWORD"] = "dev"
+        if need_username or need_password:
+            warnings.warn(
+                "ADMIN_USERNAME and/or ADMIN_PASSWORD not set; using dev/dev for local "
+                "debug only. Set both in the environment for production.",
+                stacklevel=1,
+            )
+
     db.init_app(app)
     login.init_app(app)
     migrate.init_app(app, db)
