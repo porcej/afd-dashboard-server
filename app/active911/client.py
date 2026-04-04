@@ -12,7 +12,7 @@ for parsed alert payloads (see a911client.Active911Client docstring).
 
 Changelog:
     - 2018-05-15 - Initial Commit
-    - 2026-04-03 - Active911Client + asyncio; retry on exit; parsing errors do not kill XMPP
+    - 2026-04-03 - Active911Client + asyncio; thread-pool persist; parsing errors do not kill XMPP
 """
 
 
@@ -23,6 +23,7 @@ __license__ = "MIT"
 
 
 import asyncio
+import functools
 import json
 import math
 import time
@@ -227,6 +228,77 @@ def _incident_utc(alert_data):
         return None
 
 
+def _persist_alert_sync(app, alert_data, emit_socket):
+    """
+    Synchronous Alert insert/update + optional Socket.IO emit.
+
+    Intended for ``asyncio.loop.run_in_executor`` so SQLite/DB commits do not
+    block the asyncio event loop during bulk_fetch (hundreds of rows).
+    """
+    if not isinstance(alert_data, dict):
+        app.logger.warning(
+            "Unexpected alert payload type: %s", type(alert_data)
+        )
+        return
+    alert_id = _alert_pk(alert_data)
+    if alert_id is None:
+        app.logger.warning(
+            "Alert payload missing resolvable id; keys=%s",
+            list(alert_data.keys())[:30],
+        )
+        return
+
+    incident = _incident_utc(alert_data)
+    row = Alert(
+        id=alert_id,
+        content=json.dumps(alert_data),
+        timestamp=incident if incident is not None else datetime.utcnow(),
+    )
+    with app.app_context():
+        try:
+            db.session.add(row)
+            db.session.commit()
+            app.logger.info("Alert received and added from Active 911.")
+        except IntegrityError:
+            db.session.rollback()
+            existing = db.session.get(Alert, alert_id)
+            if existing is None:
+                app.logger.warning(
+                    "IntegrityError for alert %s but row not found after rollback",
+                    alert_id,
+                )
+                return
+            existing.content = json.dumps(alert_data)
+            existing.timestamp = (
+                incident if incident is not None else datetime.utcnow()
+            )
+            try:
+                db.session.commit()
+                app.logger.info(
+                    "Alert %s updated (duplicate id / refresh).", alert_id
+                )
+            except Exception as e:
+                app.logger.warning("DB failure when updating alert: %s", e)
+                db.session.rollback()
+                return
+        except Exception as e:
+            app.logger.warning("DB failure when adding alert: %s", e)
+            db.session.rollback()
+            return
+
+        if emit_socket:
+            try:
+                socketio.emit(
+                    "a911_alarm",
+                    {"type": "alarm", "id": alert_id},
+                    namespace="/afd",
+                )
+            except Exception:
+                app.logger.exception(
+                    "Socket.IO emit failed for alert %s", alert_id
+                )
+
+
 def start_active911_client(app):
     """Run the Active911 client in this thread using an asyncio event loop."""
 
@@ -250,69 +322,17 @@ def start_active911_client(app):
                 emit_socket=False for bulk_fetch rows (snapshot at end).
                 emit_socket=True for live XMPP fetch_alert (must not be tied to bulk,
                 or concurrent bulk could suppress emits and the UI never updates).
+
+                DB work runs in the default ThreadPoolExecutor so synchronous
+                SQLAlchemy commits do not block the asyncio loop (XMPP I/O).
                 """
-                if not isinstance(alert_data, dict):
-                    app.logger.warning(
-                        "Unexpected alert payload type: %s", type(alert_data)
-                    )
-                    return
-                alert_id = _alert_pk(alert_data)
-                if alert_id is None:
-                    app.logger.warning(
-                        "Alert payload missing resolvable id; keys=%s",
-                        list(alert_data.keys())[:30],
-                    )
-                    return
-
-                incident = _incident_utc(alert_data)
-                row = Alert(
-                    id=alert_id,
-                    content=json.dumps(alert_data),
-                    timestamp=incident if incident is not None else datetime.utcnow(),
+                loop = asyncio.get_running_loop()
+                await loop.run_in_executor(
+                    None,
+                    functools.partial(
+                        _persist_alert_sync, app, alert_data, emit_socket
+                    ),
                 )
-                with app.app_context():
-                    try:
-                        db.session.add(row)
-                        db.session.commit()
-                        app.logger.info("Alert received and added from Active 911.")
-                    except IntegrityError:
-                        db.session.rollback()
-                        existing = db.session.get(Alert, alert_id)
-                        if existing is None:
-                            app.logger.warning(
-                                "IntegrityError for alert %s but row not found after rollback",
-                                alert_id,
-                            )
-                            return
-                        existing.content = json.dumps(alert_data)
-                        existing.timestamp = (
-                            incident if incident is not None else datetime.utcnow()
-                        )
-                        try:
-                            db.session.commit()
-                            app.logger.info(
-                                "Alert %s updated (duplicate id / refresh).", alert_id
-                            )
-                        except Exception as e:
-                            app.logger.warning("DB failure when updating alert: %s", e)
-                            db.session.rollback()
-                            return
-                    except Exception as e:
-                        app.logger.warning("DB failure when adding alert: %s", e)
-                        db.session.rollback()
-                        return
-
-                    if emit_socket:
-                        try:
-                            socketio.emit(
-                                "a911_alarm",
-                                {"type": "alarm", "id": alert_id},
-                                namespace="/afd",
-                            )
-                        except Exception:
-                            app.logger.exception(
-                                "Socket.IO emit failed for alert %s", alert_id
-                            )
 
             async def on_alert(alert_data):
                 await _persist_alert(alert_data, emit_socket=True)

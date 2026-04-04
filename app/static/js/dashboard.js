@@ -228,37 +228,41 @@ Copyright 2019 Joseph Porcelli
 			url: alert_url,
 			dataType : 'json',
 			success: function(json, textStatus, request){
-				if (json.result !== 'success' || !json.message) {
-					console.warn("fetchAlert: unexpected payload", json);
-					done();
-					return;
-				}
-				var msg = json.message;
-				// Normalize to Unix seconds on msg.timestamp before A91Alert builds _alarm_date
-				// (Active911 often sends ms; moment.unix() expects seconds).
-				if (msg.timestamp != null && msg.timestamp !== '') {
-					var ts = parseFloat(msg.timestamp);
-					if (!isNaN(ts)) {
-						if (ts > 1e12) {
-							ts = ts / 1000;
+				try {
+					if (json.result !== 'success' || !json.message) {
+						console.warn("fetchAlert: unexpected payload", json);
+						return;
+					}
+					var msg = json.message;
+					// Normalize to Unix seconds on msg.timestamp before A91Alert builds _alarm_date
+					// (Active911 often sends ms; moment.unix() expects seconds).
+					if (msg.timestamp != null && msg.timestamp !== '') {
+						var ts = parseFloat(msg.timestamp);
+						if (!isNaN(ts)) {
+							if (ts > 1e12) {
+								ts = ts / 1000;
+							}
+							msg.timestamp = ts;
+							msg.age = Math.round(moment().diff(moment.unix(ts)) / 1000);
+						} else {
+							msg.age = 0;
 						}
-						msg.timestamp = ts;
-						msg.age = Math.round(moment().diff(moment.unix(ts)) / 1000);
 					} else {
 						msg.age = 0;
 					}
-				} else {
-					msg.age = 0;
-				}
-				var a = new A91Alert(msg);
+					var a = new A91Alert(msg);
 
-				console.log("age: " + (msg.age / 60).toString());
-				if (msg.age / 60 > 2) {
-					active911.add_alert(a, true);
-				} else {
-					active911.add_alert(a);
+					console.log("age: " + (msg.age / 60).toString());
+					if (msg.age / 60 > 2) {
+						active911.add_alert(a, true);
+					} else {
+						active911.add_alert(a);
+					}
+				} catch (e) {
+					console.error("fetchAlert: failed processing alarm " + id, e);
+				} finally {
+					done();
 				}
-				done();
 			},
 			error: function(xhr, ajaxOpts, thrownError){
 				console.log("Warning: Alarm #" + id + " not found.");
