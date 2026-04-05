@@ -1,0 +1,80 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Telestaff{% endblock %}
+
+{% block content %}
+	<h1>Telestaff</h1>
+	<p class="text-muted">
+		Values saved here are stored in the database. Leave a field blank to use
+		<code>TS_SERVER</code> or <code>TS_COOKIE</code> from the environment.
+		After each roster fetch, refreshed cookies are written back to the database.
+	</p>
+
+	<h2 class="h5 mt-4">Roster</h2>
+	<p class="mb-2">
+		{% if row and row.last_roster_fetched_at %}
+		<strong>Last roster fetch:</strong> {{ row.last_roster_fetched_at }}
+		{% else %}
+		<span class="text-muted">No roster has been fetched yet.</span>
+		{% endif %}
+	</p>
+	<form method="post" action="{{ url_for('admin.telestaff_settings') }}" class="form-inline mb-3">
+		<input type="hidden" name="action" value="fetch_roster">
+		<button type="submit" class="btn btn-outline-primary mr-2">Fetch latest roster</button>
+		{% if row and row.last_roster_json %}
+		<a href="{{ url_for('admin.telestaff_roster_json') }}" class="btn btn-outline-secondary">View raw roster JSON</a>
+		{% endif %}
+	</form>
+
+	<h2 class="h5 mt-4">Server schedule</h2>
+	<p class="text-muted small">
+		When enabled, the server fetches the roster on a fixed interval (APScheduler) and stores
+		a snapshot. Station dashboards read <code>/roster/snapshot/</code> so they do not call Telestaff
+		on every browser poll.
+	</p>
+	<form method="post" action="{{ url_for('admin.telestaff_settings') }}" class="mb-4">
+		<input type="hidden" name="action" value="save_schedule">
+		<div class="form-group form-check">
+			<input type="checkbox" class="form-check-input" id="roster_scheduler_enabled"
+				name="roster_scheduler_enabled" {% if row and row.roster_scheduler_enabled %}checked{% endif %}>
+			<label class="form-check-label" for="roster_scheduler_enabled">Enable scheduled roster fetch</label>
+		</div>
+		<div class="form-group">
+			<label for="roster_fetch_interval_minutes">Fetch interval (minutes)</label>
+			<input type="number" class="form-control" style="max-width: 8rem;" min="1" max="1440" step="1"
+				id="roster_fetch_interval_minutes" name="roster_fetch_interval_minutes"
+				value="{{ interval_minutes }}">
+			<small class="form-text text-muted">Between 1 and 1440 (1 day). Default 15.</small>
+		</div>
+		<button type="submit" class="btn btn-primary">Save schedule</button>
+	</form>
+
+	<h2 class="h5 mt-4">Connection</h2>
+	<form method="post" action="{{ url_for('admin.telestaff_settings') }}">
+		<input type="hidden" name="action" value="save">
+		<div class="form-group">
+			<label for="server_url">Telestaff server URL</label>
+			<input type="url" class="form-control" id="server_url" name="server_url"
+				placeholder="https://telestaff.example.gov"
+				value="{{ row.server_url if row and row.server_url else '' }}">
+			<small class="form-text text-muted">
+				Effective URL in use: <strong>{{ effective_server or '(none)' }}</strong>
+				{% if env_server %}
+				| env <code>TS_SERVER</code>: {{ env_server }}
+				{% endif %}
+			</small>
+		</div>
+		<div class="form-group">
+			<label for="cookie_header">Cookie header</label>
+			<textarea class="form-control font-monospace" id="cookie_header" name="cookie_header"
+				rows="4" placeholder="name=value; name2=value2">{{ row.cookie_header if row else '' }}</textarea>
+			<small class="form-text text-muted">
+				Paste the full <code>Cookie</code> header value if required for your Telestaff host.
+				Effective cookie is stored when non-empty in DB; roster responses update this field automatically.
+			</small>
+		</div>
+		{% if row and row.updated_at %}
+		<p class="small text-muted">Settings last saved: {{ row.updated_at }}</p>
+		{% endif %}
+		<button type="submit" class="btn btn-primary">Save</button>
+	</form>
+{% endblock %}

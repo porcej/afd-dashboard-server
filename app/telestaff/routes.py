@@ -13,14 +13,18 @@ __version__ = "0.0.1"
 __copyright__ = "Copyright (c) 2018 Joseph Porcelli"
 __license__ = "MIT"
 
+import json
+
 from festis import telestaff as ts
 from flask import current_app, jsonify
 from app.telestaff import bp
-
-
-def _telestaff_base_url():
-    raw = (current_app.config.get("TS_SERVER") or "").strip()
-    return raw
+from app.telestaff.settings_store import (
+    effective_cookie,
+    effective_server,
+    get_settings_row,
+    persist_last_roster_snapshot,
+    persist_telestaff_cookies,
+)
 
 
 def _sanitize_telestaff_payload(obj):
@@ -58,45 +62,98 @@ def _telestaff_login_config_error():
     return None
 
 
-# *====================================================================*
-#         Routes
-# *====================================================================*
+def telestaff_roster_payload(date=None):
+    """
+    Perform Telestaff roster fetch and persist cookies + last roster snapshot.
 
-@bp.route('/roster')
-@bp.route('/roster/')
-@bp.route('/roster/<date>')
-def roster(date=None):
-    base = _telestaff_base_url()
+    Returns:
+        (payload_dict, None) on success
+        (None, (response, status_code)) on error (suitable as Flask return value)
+    """
+    base = effective_server(current_app)
     if not base:
-        return jsonify(
-            error="TS_SERVER is not set",
-            hint="Set TS_SERVER in the environment (e.g. https://telestaff.example.gov)",
-        ), 503
+        return None, (
+            jsonify(
+                error="TS_SERVER is not set",
+                hint=(
+                    "Set TS_SERVER in the environment or configure the Telestaff URL "
+                    "in Admin / Telestaff."
+                ),
+            ),
+            503,
+        )
     if not (base.startswith("http://") or base.startswith("https://")):
-        return jsonify(
-            error="TS_SERVER must start with http:// or https://",
-            hint=base[:80] + ("..." if len(base) > 80 else ""),
-        ), 400
+        return None, (
+            jsonify(
+                error="TS_SERVER must start with http:// or https://",
+                hint=base[:80] + ("..." if len(base) > 80 else ""),
+            ),
+            400,
+        )
 
     login_err = _telestaff_login_config_error()
     if login_err is not None:
-        return login_err
+        return None, login_err
 
     cfg = current_app.config
     telestaff = ts.Telestaff(
         host=base,
         t_user=(cfg.get("TS_USER") or "").strip(),
         t_pass=cfg.get("TS_PASS"),
-        cookies=cfg.get("TS_COOKIE") or "",
+        cookies=effective_cookie(current_app) or "",
     )
 
-    telestaff.do_login()
     response = telestaff.get_telestaff(kind="rosterFull", date=date)
-    if not isinstance(response, dict):
-        return jsonify(data=_sanitize_telestaff_payload(response))
+    cookies_dict = telestaff.get_cookies()
+    if cookies_dict:
+        cookie_string = "; ".join(f"{k}={v}" for k, v in cookies_dict.items())
+        persist_telestaff_cookies(cookie_string)
+        cfg["TS_COOKIE"] = cookie_string
 
-    out = {
-        "status_code": response.get("status_code"),
-        "data": _sanitize_telestaff_payload(response.get("data")),
-    }
+    if not isinstance(response, dict):
+        out = {"data": _sanitize_telestaff_payload(response)}
+    else:
+        out = {
+            "status_code": response.get("status_code"),
+            "data": _sanitize_telestaff_payload(response.get("data")),
+        }
+
+    persist_last_roster_snapshot(out)
+    return out, None
+
+
+# *====================================================================*
+#         Routes
+# *====================================================================*
+
+@bp.route('/roster/snapshot')
+@bp.route('/roster/snapshot/')
+def roster_snapshot():
+    """
+    Return the last stored roster JSON (no Telestaff call).
+    Dashboards poll this to refresh the display after server-side scheduled fetches.
+    """
+    row = get_settings_row()
+    if row is None or not row.last_roster_json:
+        return jsonify(
+            error="No roster snapshot yet",
+            hint=(
+                "Enable the scheduled fetch or use Fetch latest roster in Admin / Telestaff, "
+                "or call GET /roster once."
+            ),
+        ), 503
+    try:
+        payload = json.loads(row.last_roster_json)
+    except (TypeError, ValueError):
+        return jsonify(error="Stored roster snapshot is invalid JSON."), 500
+    return jsonify(payload)
+
+
+@bp.route('/roster')
+@bp.route('/roster/')
+@bp.route('/roster/<date>')
+def roster(date=None):
+    out, err = telestaff_roster_payload(date=date)
+    if err is not None:
+        return err
     return jsonify(out)

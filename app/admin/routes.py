@@ -14,10 +14,19 @@ __version__ = "0.0.1"
 __copyright__ = "Copyright (c) 2018 Joseph Porcelli"
 __license__ = "MIT"
 
-from flask import render_template, current_app, request, jsonify
+import json
+
+from flask import render_template, current_app, request, jsonify, flash, redirect, url_for
 from flask_login import current_user, login_required
 from app.admin import bp
 from app.models import Alert, Station, Unit
+from app.telestaff.routes import telestaff_roster_payload
+from app.telestaff.settings_store import (
+    effective_server as telestaff_effective_server,
+    get_settings_row,
+    save_admin_settings,
+    save_schedule_settings,
+)
 from app import db, socketio
 from sqlalchemy import exc
 
@@ -35,6 +44,82 @@ def admin():
     """
     stations = Station.query.order_by(Station.name.asc()).all()
     return render_template('admin/admin.html', stations=stations)
+
+def _roster_fetch_error_message(err_response):
+    """Build a short message from a roster error (jsonify tuple response)."""
+    resp, _status = err_response
+    data = resp.get_json(silent=True) or {}
+    parts = [data.get("error"), data.get("hint")]
+    return ": ".join(p for p in parts if p) or "Roster fetch failed."
+
+
+@bp.route('/admin/telestaff', methods=['GET', 'POST'])
+@bp.route('/admin/telestaff/', methods=['GET', 'POST'])
+@login_required
+def telestaff_settings():
+    """
+    Configure Telestaff base URL and cookie header stored in the database.
+    Empty fields fall back to TS_SERVER / TS_COOKIE from the environment.
+    """
+    stations = Station.query.order_by(Station.name.asc()).all()
+    if request.method == 'POST':
+        action = request.form.get('action', 'save')
+        if action == 'fetch_roster':
+            _payload, err = telestaff_roster_payload(date=None)
+            if err is not None:
+                flash('Error: ' + _roster_fetch_error_message(err))
+            else:
+                flash('Roster fetched; snapshot saved.')
+            return redirect(url_for('admin.telestaff_settings'))
+        if action == 'save_schedule':
+            enabled = request.form.get('roster_scheduler_enabled') == 'on'
+            minutes = request.form.get('roster_fetch_interval_minutes', type=int)
+            save_schedule_settings(enabled, minutes, current_app)
+            flash('Roster schedule saved.')
+            return redirect(url_for('admin.telestaff_settings'))
+        server_url = request.form.get('server_url', '') or ''
+        cookie_header = request.form.get('cookie_header', '') or ''
+        save_admin_settings(server_url, cookie_header)
+        flash('Telestaff settings saved.')
+        return redirect(url_for('admin.telestaff_settings'))
+    row = get_settings_row()
+    interval_minutes = 15
+    if row and row.roster_fetch_interval_seconds:
+        interval_minutes = max(1, row.roster_fetch_interval_seconds // 60)
+    return render_template(
+        'admin/telestaff_settings.html',
+        stations=stations,
+        row=row,
+        env_server=(current_app.config.get('TS_SERVER') or '').strip(),
+        effective_server=telestaff_effective_server(current_app),
+        interval_minutes=interval_minutes,
+    )
+
+
+@bp.route('/admin/telestaff/roster-json', methods=['GET'])
+@bp.route('/admin/telestaff/roster-json/', methods=['GET'])
+@login_required
+def telestaff_roster_json():
+    """Pretty-printed JSON of the last stored roster response (admin only)."""
+    stations = Station.query.order_by(Station.name.asc()).all()
+    row = get_settings_row()
+    raw = row.last_roster_json if row else None
+    if not raw:
+        pretty_json = None
+    else:
+        try:
+            pretty_json = json.dumps(
+                json.loads(raw), indent=2, sort_keys=True, default=str
+            )
+        except (TypeError, ValueError):
+            pretty_json = raw
+    return render_template(
+        'admin/telestaff_roster_json.html',
+        stations=stations,
+        pretty_json=pretty_json,
+        last_fetch=row.last_roster_fetched_at if row else None,
+    )
+
 
 @bp.route('/admin/console')
 @bp.route('/admin/console/')
