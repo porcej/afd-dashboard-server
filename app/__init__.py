@@ -123,7 +123,9 @@ def create_app(config_class=Config):
     from app.admin import bp as admin_bp
     app.register_blueprint(admin_bp)
 
-    # scheduler.start()
+    from app.telestaff.scheduler import init_telestaff_scheduler
+
+    init_telestaff_scheduler(app)
 
     # Now check if we are debug/testing if not load logging
     if not app.debug and not app.testing:

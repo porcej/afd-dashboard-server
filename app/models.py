@@ -61,6 +61,22 @@ class Unit(db.Model):
     alert_id = db.Column(db.Integer, db.ForeignKey('station.id'))
 
     def __repr__(self):
-        return '<Unit {}: Home: {}, MovedUp: {}'.format(self.name, \
-                                                        self.home.name,\
-                                                        self.movedup.name)
+        return '<Unit {}>'.format(self.name)
+
+
+class TelestaffSettings(db.Model):
+    """Singleton (id=1): optional override for Telestaff host URL and cookie header."""
+
+    __tablename__ = "telestaff_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    server_url = db.Column(db.String(512), nullable=True)
+    cookie_header = db.Column(db.Text(), nullable=True)
+    updated_at = db.Column(db.DateTime(), nullable=True)
+    last_roster_fetched_at = db.Column(db.DateTime(), nullable=True)
+    last_roster_json = db.Column(db.Text(), nullable=True)
+    roster_scheduler_enabled = db.Column(db.Boolean(), nullable=False, default=False)
+    roster_fetch_interval_seconds = db.Column(db.Integer(), nullable=False, default=900)
+
+    def __repr__(self):
+        return '<TelestaffSettings id={}>'.format(self.id)

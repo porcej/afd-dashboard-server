@@ -13,16 +13,18 @@ Copyright 2017 Joseph Porcelli
     'use strict';
 
     var ws_settings = {
-            url                 : '/roster/',           // Where to get data '' is same domain
+            // Cached roster JSON from server-side scheduled fetches (no Telestaff call per poll).
+            url                 : '/roster/snapshot/',
             targetElement       : ".cb-webstaff",       // Target HTML Element
             alertElement        : ".cb-webstaff-alert", // Target Element for HTML Alerts
             rosterElement       : ".cb-webstaff-roster",// Target element Roster
             timer               : null,                 // Var to hold timer to check for updates
+            // Poll snapshot often; Telestaff is updated on the server schedule only.
+            updateResolution    : 60000,                // ms between snapshot reloads (60 s)
             // updateResolution    : 30000,
-            updateResolution    : 900000,               // # of ms between time updates
+            // updateResolution    : 900000,
             // updateResolution: 500,
-            // updateResolution: 60000,                 // # of ms between time updates
-                                                        //    900000 -> 15 min
+                                                        //    900000 -> 15 min (legacy live /roster)
             rollOverTime        : "2400",               // Time of day to show
                                                         // next day's roster HHmm
                                                         // Note that setting this to 0000
@@ -144,6 +146,35 @@ Copyright 2017 Joseph Porcelli
         return '';
         
     }   // getShift()
+
+
+    /* =========================================================================
+     * Telestaff roster shift titles: legacy "Ops A Shift" vs newer "4 Ops Shifts A".
+     * When getShift() is empty (calendar no longer matches 2017 cycle), callers skip
+     * shift-level filtering and rely on station/unit filters only.
+     * ====================================================================== */
+    function shiftMatchesShiftTitle(shiftTitle, shiftLetter, rosterDateStr) {
+        if (!shiftTitle) {
+            return false;
+        }
+        if (rosterDateStr && shiftTitle === rosterDateStr) {
+            return true;
+        }
+        var m = shiftTitle.match(/Shifts?\s+([ABC])\b/i);
+        if (m && shiftLetter) {
+            return m[1].toUpperCase() === shiftLetter.toUpperCase();
+        }
+        if (shiftLetter) {
+            var t = shiftTitle.toUpperCase();
+            var letter = shiftLetter.toUpperCase();
+            if (t.indexOf('OPS') >= 0) {
+                if (t.indexOf('SHIFTS ' + letter) >= 0 || t.indexOf('SHIFT ' + letter) >= 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
 
     /* =========================================================================
@@ -501,13 +532,13 @@ Copyright 2017 Joseph Porcelli
 
         $.ajax({
             type : 'GET',
-            url  : ws_settings.url + date.format('YYYYMMDD'),
+            url  : ws_settings.url,
             dataType : 'json',
             success: function(json, textStatus, request){
                 $(ws_settings.alertElement).remove();
                 console.log("Telestaff data received at " + moment().format('D MMM, YYYY - HH:mm:ss') + ".");
-                if (json.status_code.toString() == '200' ){
-                    if (json.data.type == 'roster'){
+                if (String(json.status_code) === '200' ){
+                    if (json.data && json.data.type == 'roster'){
 
                         var saveThis = function(title){
                             if (!title){
@@ -527,72 +558,80 @@ Copyright 2017 Joseph Porcelli
                         var singleUnit = [];
                         var multipleUnits = [];
 
-                        var rosterDate;
-
-
                         for (var ddx=0; ddx < json.data.Date.length; ddx++){
-                                var tempDate = json.data.Date[ddx].title;
-                                rosterDate = moment(tempDate.substr(tempDate.indexOf(',') + 1).trim(), "MMMM DD, YYYY");
-                                rosterDate = "Ops " + getShift(rosterDate).toUpperCase() + " Shift";
-                            if (saveThis(json.data.Date[ddx].title)){
-                                if (json.data.Date[ddx].hasOwnProperty('Position')){
-                                    singleUnit.push(json.data.Date[ddx]);
+                            var dateEntry = json.data.Date[ddx];
+                            var tempDate = dateEntry.title || '';
+                            var rosterMoment = moment(tempDate.substr(tempDate.indexOf(',') + 1).trim(), "MMMM DD, YYYY");
+                            var shiftLetter = getShift(rosterMoment) || '';
+                            var rosterDateStr = shiftLetter
+                                ? ('Ops ' + shiftLetter.toUpperCase() + ' Shift')
+                                : '';
+
+                            if (saveThis(dateEntry.title)){
+                                if (dateEntry.hasOwnProperty('Position')){
+                                    singleUnit.push(dateEntry);
                                 } else {
-                                    multipleUnits.push(json.data.Date[ddx]);
+                                    multipleUnits.push(dateEntry);
                                 }
                             } else {
-                                var batallions = json.data.Date[ddx].Institution[0].Agency[0].Batallion;
+                                var institutions = dateEntry.Institution || [];
+                                for (var idx = 0; idx < institutions.length; idx++) {
+                                    var agencies = institutions[idx].Agency || [];
+                                    for (var agx = 0; agx < agencies.length; agx++) {
+                                        var batallions = agencies[agx].Batallion || [];
 
-                                for (var bdx=0; bdx < batallions.length; bdx++){
-                                    if (saveThis(batallions[bdx].title)){
-                                       if (batallions[bdx].hasOwnProperty('Position')){
-                                            singleUnit.push(batallions[bdx]);
-                                        } else {
-                                            multipleUnits.push(batallions[bdx]);
-                                        }
-                                    } else {
-                                        var shifts = batallions[bdx].Shift;
-                                        for (var shiftDx = 0; shiftDx < shifts.length; shiftDx++){
-                                            if (shifts[shiftDx].title !== rosterDate){
-                                                continue;
-                                            }
-
-                                            if ( saveThis( shifts[shiftDx].title )){
-
-                                               if (shifts[shiftDx].hasOwnProperty('Position')){
-                                                    singleUnit.push(shifts[shiftDx]);
+                                        for (var bdx=0; bdx < batallions.length; bdx++){
+                                            if (saveThis(batallions[bdx].title)){
+                                                if (batallions[bdx].hasOwnProperty('Position')){
+                                                    singleUnit.push(batallions[bdx]);
                                                 } else {
-                                                    multipleUnits.push(shifts[shiftDx]);
+                                                    multipleUnits.push(batallions[bdx]);
                                                 }
                                             } else {
-                                                var stations = shifts[shiftDx].Station;
-                                                for (var sdx=0; sdx < stations.length; sdx++){
-                                                    if ( saveThis( stations[sdx].title )){
-                                                       if (stations[sdx].hasOwnProperty('Position')){
-                                                            singleUnit.push(stations[sdx]);
+                                                var shifts = batallions[bdx].Shift || [];
+                                                for (var shiftDx = 0; shiftDx < shifts.length; shiftDx++){
+                                                    if (shiftLetter) {
+                                                        if (!shiftMatchesShiftTitle(shifts[shiftDx].title, shiftLetter, rosterDateStr)){
+                                                            continue;
+                                                        }
+                                                    }
+
+                                                    if ( saveThis( shifts[shiftDx].title )){
+
+                                                        if (shifts[shiftDx].hasOwnProperty('Position')){
+                                                            singleUnit.push(shifts[shiftDx]);
                                                         } else {
-                                                            multipleUnits.push(stations[sdx]);
+                                                            multipleUnits.push(shifts[shiftDx]);
                                                         }
                                                     } else {
-                                                        var units = stations[sdx].Unit;
-                                                        for (var udx=0; udx < units.length;udx++){
-                                                            if( saveThis( units[udx].title ) ){
-                                                               if (units[udx].hasOwnProperty('Position')){
-                                                                    singleUnit.push(units[udx]);
+                                                        var stations = shifts[shiftDx].Station || [];
+                                                        for (var sdx=0; sdx < stations.length; sdx++){
+                                                            if ( saveThis( stations[sdx].title )){
+                                                                if (stations[sdx].hasOwnProperty('Position')){
+                                                                    singleUnit.push(stations[sdx]);
                                                                 } else {
-                                                                    multipleUnits.push(units[udx]);
+                                                                    multipleUnits.push(stations[sdx]);
                                                                 }
+                                                            } else {
+                                                                var units = stations[sdx].Unit || [];
+                                                                for (var udx=0; udx < units.length; udx++){
+                                                                    if( saveThis( units[udx].title ) ){
+                                                                        if (units[udx].hasOwnProperty('Position')){
+                                                                            singleUnit.push(units[udx]);
+                                                                        } else {
+                                                                            multipleUnits.push(units[udx]);
+                                                                        }
+                                                                    }
+                                                                }
+
                                                             }
                                                         }
-
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
-
-
                             }
 
                         }   // End Unit Filtering
@@ -608,7 +647,7 @@ Copyright 2017 Joseph Porcelli
                         for (var sdx=0; sdx < multipleUnits.length; sdx++ ){
                             if (! multipleUnits[sdx].dot){
                                 
-                                var units = multipleUnits[sdx].Unit;
+                                var units = multipleUnits[sdx].Unit || [];
                                 for (var udx=0; udx < units.length; udx++ ){
                                     if (!units[udx].dot){
                                         var unitHeader = '<div class="card-header clearfix">' + units[udx].title;
@@ -620,7 +659,7 @@ Copyright 2017 Joseph Porcelli
                                         var unitDiv = $('<div/>').addClass("card mb-4 cb-unit-roster cb-" + getUnitType(units[udx].title));
                                         unitDiv.append(unitHeader);
 
-                                        var positions = units[udx].Position;
+                                        var positions = units[udx].Position || [];
                                         // var positionsDiv = $('<div/>').addClass('card-block');
                                         var positionsDiv = $('<table/>').addClass('unit-positions');
 
@@ -674,7 +713,7 @@ Copyright 2017 Joseph Porcelli
                                 var unitDiv = $('<div/>').addClass("card mb-4 cb-unit-roster cb-" + getUnitType(unit.title));
                                     unitDiv.append(unitHeader);
 
-                                var positions = unit.Position;
+                                var positions = unit.Position || [];
 
                                 var positionsDiv = $('<table/>').addClass('unit-positions');
 

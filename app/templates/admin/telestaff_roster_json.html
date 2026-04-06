@@ -1,0 +1,17 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Telestaff roster (JSON){% endblock %}
+
+{% block content %}
+	<p>
+		<a href="{{ url_for('admin.telestaff_settings') }}" class="btn btn-outline-secondary btn-sm">&larr; Back to Telestaff settings</a>
+	</p>
+	<h1>Raw roster JSON</h1>
+	{% if last_fetch %}
+	<p class="text-muted small">Snapshot from last fetch: {{ last_fetch }}</p>
+	{% endif %}
+	{% if pretty_json %}
+	<pre class="bg-light border p-3" style="max-height: 80vh; overflow: auto;"><code>{{ pretty_json }}</code></pre>
+	{% else %}
+	<p class="text-muted">No roster snapshot yet. Use &quot;Fetch latest roster&quot; on the Telestaff settings page.</p>
+	{% endif %}
+{% endblock %}
